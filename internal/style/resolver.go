@@ -3,10 +3,14 @@
 // → basedOn chain → direct formatting.
 //
 // Phase boundary (plan 02-01 vs 02-02)
-//   ThemeColor and NumPr are passed through UNCHANGED on the resolved
-//   clone.  This plan does NOT concretize theme colors, merge numbering
-//   level pPr, or parse numbering.xml / theme1.xml.  Those belong to
-//   plan 02-02 (theme.go + numbering.go).
+//   Plan 02-01: ThemeColor and NumPr are passed through UNCHANGED on the
+//   resolved clone.  The chain walker, memo cache, merge and clone helpers
+//   are untouched by 02-02.
+//
+//   Plan 02-02 added theme color concretization (ResolveRun →
+//   theme.ResolveColor) and numbering level pPr merge (ResolveParagraph →
+//   numbering.ResolveLvl + mergePPr) as post-processing steps.  CT_Shd
+//   theme colors are NOT concretized (out of v1 scope).
 //
 // Decision traceability
 //   D-01 clone output (ResolveParagraph / ResolveRun return fresh
@@ -14,9 +18,11 @@
 //   D-03 memo by styleId + cache invalidation via Part.IsModified
 //   D-04 single entry point (caller never touches cache directly)
 //   D-05 cycle detection (visited-set, last-good, warning appended)
-//   D-07 missing basedOn ref → warning + docDefaults-only fallback
+//   D-06 theme colors concretized at resolve-time (read-only over theme1.xml)
+//   D-07 missing ref → warning + sensible default
 //   D-12 latentStyles consulted ONLY when explicit styleId missing from
 //        styles.xml; unstyled paragraphs skip it entirely
+//   D-13 numbering resolution depth: numFmt, lvlText, start, level pPr
 package style
 
 import (
@@ -29,6 +35,11 @@ import (
 
 // Resolver walks the OOXML basedOn chain for paragraph and run
 // properties, returning deep-merged clones.
+//
+// Plan 02-02 added the theme and numbering caches (lazy-parse, warn
+// callback threaded from appendWarning).  They are post-processors:
+// ResolveRun → theme.ResolveColor (D-06); ResolveParagraph →
+// numbering.ResolveLvl + mergePPr (D-13).
 type Resolver struct {
 	pkg *opc.Package
 
@@ -40,11 +51,15 @@ type Resolver struct {
 
 	warnings []string       // accumulator for D-05/D-07 warnings
 	warn     func(string)   // bound to appendWarning; threaded into collectChain
+
+	theme     *themeCache     // lazy theme1.xml color map (plan 02-02)
+	numbering *numberingCache // lazy numbering.xml resolver (plan 02-02)
 }
 
-// NewResolver constructs a Resolver with empty memo maps.
-// styles.xml is NOT parsed eagerly — parse is lazy on the first
-// ResolveParagraph / ResolveRun call.
+// NewResolver constructs a Resolver with empty memo maps and lazy
+// caches for theme color and numbering resolution.
+// styles.xml, theme1.xml, and numbering.xml are NOT parsed eagerly —
+// parse is lazy on the first ResolveParagraph / ResolveRun call.
 func NewResolver(pkg *opc.Package) *Resolver {
 	r := &Resolver{
 		pkg:     pkg,
@@ -52,6 +67,8 @@ func NewResolver(pkg *opc.Package) *Resolver {
 		memoRPr: make(map[string]*wml.CT_RPr),
 	}
 	r.warn = r.appendWarning
+	r.theme = newThemeCache(pkg, r.appendWarning)
+	r.numbering = newNumberingCache(pkg, r.appendWarning)
 	return r
 }
 
@@ -106,6 +123,24 @@ func (r *Resolver) ResolveParagraph(p *wml.CT_P) (*wml.CT_PPr, error) {
 	// Merge direct pPr on top (D-04: direct formatting overrides chain).
 	if p.PPr != nil {
 		result = mergePPr(result, p.PPr)
+	}
+
+	// D-13: merge numbering level pPr into effective pPr (plan 02-02 post-process).
+	if result.NumPr != nil && result.NumPr.NumId != nil && result.NumPr.NumId.Val != nil {
+		numId := *result.NumPr.NumId.Val
+		ilvl := int64(0)
+		if result.NumPr.ILvl != nil && result.NumPr.ILvl.Val != nil {
+			ilvl = *result.NumPr.ILvl.Val
+		}
+
+		r.numbering.invalidateIfStale()
+
+		lvl := r.numbering.ResolveLvl(numId, ilvl)
+		if lvl != nil && lvl.PPr != nil {
+			result = mergePPr(result, lvl.PPr)
+		}
+		// D-07: if lvl is nil, the warning was already appended by
+		// ResolveLvl.  NumPr is left intact on result.
 	}
 
 	return result, nil
@@ -165,6 +200,11 @@ func (r *Resolver) ResolveRun(p *wml.CT_P, run *wml.CT_R) (*wml.CT_RPr, error) {
 	// Merge run direct rPr on top (highest priority).
 	if run.RPr != nil {
 		result = mergeRPr(result, run.RPr)
+	}
+
+	// D-06: concretize theme color at resolve-time (plan 02-02 post-process).
+	if result.Color != nil {
+		result.Color = r.theme.ResolveColor(result.Color)
 	}
 
 	return result, nil

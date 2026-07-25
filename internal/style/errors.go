@@ -19,3 +19,8 @@ var ErrCloneTargetNotEmpty = errors.New("style: clone target not empty")
 // Callers match with errors.Is; all parse errors wrap this via
 // fmt.Errorf("style: decode theme1.xml: %v: %w", err, ErrThemeParseFailed).
 var ErrThemeParseFailed = errors.New("style: theme1.xml parse failed")
+
+// ErrNumberingParseFailed is returned when numbering.xml cannot be parsed.
+// Callers match with errors.Is; all parse errors wrap this via
+// fmt.Errorf("style: decode numbering.xml: %v: %w", err, ErrNumberingParseFailed).
+var ErrNumberingParseFailed = errors.New("style: numbering.xml parse failed")

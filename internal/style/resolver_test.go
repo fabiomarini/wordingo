@@ -227,7 +227,7 @@ const headingChainStyles = `
   <w:name w:val="heading 1"/>
   <w:basedOn w:val="Normal"/>
   <w:pPr><w:keepNext/><w:spacing w:before="480" w:after="240"/></w:pPr>
-  <w:rPr><w:b/><w:sz w:val="32"/><w:color w:themeColor="accent1"/></w:rPr>
+  <w:rPr><w:b/><w:sz w:val="32"/><w:color w:val="2E74B5"/></w:rPr>
 </w:style>
 <w:style w:type="paragraph" w:styleId="Heading2">
   <w:name w:val="heading 2"/>
@@ -582,7 +582,7 @@ func TestResolveParagraph_CacheInvalidation(t *testing.T) {
 
 // ---------- Test: ThemeColor pass-through (NOT cleared) ----------
 
-func TestResolveParagraph_ThemeColorPassThrough(t *testing.T) {
+func TestResolveParagraph_ThemeColorConcretized(t *testing.T) {
 	stylesBody := `
 <w:docDefaults>
   <w:rPrDefault><w:rPr><w:sz w:val="22"/></w:rPr></w:rPrDefault>
@@ -596,7 +596,8 @@ func TestResolveParagraph_ThemeColorPassThrough(t *testing.T) {
   <w:rPr><w:color w:themeColor="accent1"/></w:rPr>
 </w:style>`
 	stylesXML := buildStylesXML(t, stylesBody)
-	pkg := buildPkgWithStyles(t, stylesXML)
+	themeXML := buildThemeXML(t, `<a:accent1><a:srgbClr val="156082"/></a:accent1>`)
+	pkg := buildPkgWithThemeAndNumbering(t, themeXML, nil, stylesXML)
 	resolver := NewResolver(pkg)
 
 	p := &wml.CT_P{PPr: &wml.CT_PPr{
@@ -611,12 +612,12 @@ func TestResolveParagraph_ThemeColorPassThrough(t *testing.T) {
 	if rpr == nil || rpr.Color == nil {
 		t.Fatal("rpr.Color is nil")
 	}
-	// ThemeColor must be "accent1" — NOT cleared by this plan.
-	if rpr.Color.ThemeColor == nil {
-		t.Fatal("ThemeColor was cleared (nil) — it must be passed through for plan 02-02")
+	// D-06: ThemeColor is concretized to hex at resolve-time.
+	if rpr.Color.ThemeColor != nil {
+		t.Errorf("ThemeColor should be nil after concretization, got %q", *rpr.Color.ThemeColor)
 	}
-	if *rpr.Color.ThemeColor != "accent1" {
-		t.Fatalf("ThemeColor = %q, want %q", *rpr.Color.ThemeColor, "accent1")
+	if rpr.Color.Val == nil || *rpr.Color.Val != "156082" {
+		t.Errorf("Color.Val = %v, want 156082 (concretized from themeColor accent1)", rpr.Color.Val)
 	}
 }
 

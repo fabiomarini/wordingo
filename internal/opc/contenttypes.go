@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"strings"
 )
 
 // contentTypesNS is the fixed namespace of [Content_Types].xml.
@@ -73,28 +74,44 @@ func (c *ContentTypes) TypeFor(partName string) string {
 	return c.Defaults[ext]
 }
 
-// serialize renders the content types as canonical [Content_Types].xml.
+// serialize renders [Content_Types].xml as a canonical XML byte slice.
+// Builds XML directly to avoid Go's encoding/xml redundant xmlns
+// on child elements — Word's OPC parser rejects those.
 func (c *ContentTypes) serialize() ([]byte, error) {
-	var x ctXML
+	var b strings.Builder
+	b.WriteString(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`)
+	b.WriteByte('\n')
+	b.WriteString(`<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">`)
+
 	exts := make([]string, 0, len(c.Defaults))
 	for e := range c.Defaults {
 		exts = append(exts, e)
 	}
 	sort.Strings(exts)
 	for _, e := range exts {
-		x.Defaults = append(x.Defaults, ctDefault{e, c.Defaults[e]})
+		fmt.Fprintf(&b, `<Default Extension="%s" ContentType="%s"></Default>`,
+			xmlEscape(e), xmlEscape(c.Defaults[e]))
 	}
+
 	names := make([]string, 0, len(c.Overrides))
 	for n := range c.Overrides {
 		names = append(names, n)
 	}
 	sort.Strings(names)
 	for _, n := range names {
-		x.Overrides = append(x.Overrides, ctOverride{n, c.Overrides[n]})
+		fmt.Fprintf(&b, `<Override PartName="%s" ContentType="%s"></Override>`,
+			xmlEscape(n), xmlEscape(c.Overrides[n]))
 	}
-	out, err := xml.Marshal(x)
-	if err != nil {
-		return nil, fmt.Errorf("opc: serialize [Content_Types].xml: %w", err)
-	}
-	return append([]byte(xml.Header), out...), nil
+
+	b.WriteString(`</Types>`)
+	return []byte(b.String()), nil
+}
+
+// xmlEscape escapes special characters for XML attribute values.
+func xmlEscape(s string) string {
+	s = strings.ReplaceAll(s, "&", "&amp;")
+	s = strings.ReplaceAll(s, "\"", "&quot;")
+	s = strings.ReplaceAll(s, "<", "&lt;")
+	s = strings.ReplaceAll(s, ">", "&gt;")
+	return s
 }

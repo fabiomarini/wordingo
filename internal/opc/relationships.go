@@ -36,7 +36,7 @@ type relsXML struct {
 		ID         string `xml:"Id,attr"`
 		Type       string `xml:"Type,attr"`
 		Target     string `xml:"Target,attr"`
-		TargetMode string `xml:"TargetMode,attr"`
+		TargetMode string `xml:"TargetMode,attr,omitempty"`
 	} `xml:"http://schemas.openxmlformats.org/package/2006/relationships Relationship"`
 }
 
@@ -105,22 +105,31 @@ func sourcePartFor(relsName string) string {
 	return dir + "/" + base
 }
 
-// serialize renders the relationship set as a canonical .rels part.
+// serialize renders .rels XML by building the XML directly.
+// Avoids Go's encoding/xml redundant xmlns on child elements
+// which Word's OPC parser rejects.
 func (rs *Relationships) serialize() ([]byte, error) {
-	var x relsXML
+	var b strings.Builder
+	b.WriteString(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`)
+	b.WriteByte('\n')
+	b.WriteString(`<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">`)
+
 	for _, r := range rs.Rels {
-		x.Rels = append(x.Rels, struct {
-			ID         string `xml:"Id,attr"`
-			Type       string `xml:"Type,attr"`
-			Target     string `xml:"Target,attr"`
-			TargetMode string `xml:"TargetMode,attr"`
-		}{r.ID, r.Type, r.Target, r.TargetMode})
+		b.WriteString(`<Relationship Id="`)
+		b.WriteString(xmlEscape(r.ID))
+		b.WriteString(`" Type="`)
+		b.WriteString(xmlEscape(r.Type))
+		b.WriteString(`" Target="`)
+		b.WriteString(xmlEscape(r.Target))
+		if r.TargetMode != "" {
+			b.WriteString(`" TargetMode="`)
+			b.WriteString(xmlEscape(r.TargetMode))
+		}
+		b.WriteString(`"></Relationship>`)
 	}
-	out, err := xml.Marshal(x)
-	if err != nil {
-		return nil, fmt.Errorf("opc: serialize relationships: %w", err)
-	}
-	return append([]byte(xml.Header), out...), nil
+
+	b.WriteString(`</Relationships>`)
+	return []byte(b.String()), nil
 }
 
 // NextRID allocates a fresh relationship id. Ids are issued
@@ -185,7 +194,6 @@ func (rs *Relationships) validate(sourcePart string, parts map[string]bool) erro
 // source part. Returns "" if the result escapes the package root.
 func resolveTarget(sourcePart, target string) string {
 	if strings.HasPrefix(target, "/") {
-		// Package-absolute target.
 		clean := path.Clean(target)
 		if clean == "/" || strings.HasPrefix(clean, "/../") || clean == "/.." {
 			return ""

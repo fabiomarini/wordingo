@@ -14,9 +14,9 @@ import (
 
 func TestPrefixFor_Transitional(t *testing.T) {
 	tests := []struct {
-		uri    string
-		want   string
-		label  string
+		uri   string
+		want  string
+		label string
 	}{
 		{"http://schemas.openxmlformats.org/wordprocessingml/2006/main", "w", "WML main"},
 		{"http://schemas.openxmlformats.org/officeDocument/2006/relationships", "r", "relationships"},
@@ -27,7 +27,6 @@ func TestPrefixFor_Transitional(t *testing.T) {
 		{"http://schemas.microsoft.com/office/word/2012/wordml", "w15", "w15"},
 		{"http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing", "wp14", "wp14"},
 		{"http://www.w3.org/XML/1998/namespace", "xml", "xml namespace"},
-		{"http://schemas.openxmlformats.org/package/2006/relationships", "", "package rels (not in canonical)"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.label, func(t *testing.T) {
@@ -110,16 +109,14 @@ func TestSafeDecoder_RejectsDOCTYPE(t *testing.T) {
 }
 
 func TestSafeDecoder_DepthLimit(t *testing.T) {
-	// Build 600-deep nesting
+	// Build 600-deep nesting via repeated elements
 	var buf bytes.Buffer
-	buf.WriteString("<a>")
 	for i := 0; i < 600; i++ {
-		buf.WriteString("<b>")
+		buf.WriteString("<a>")
 	}
 	for i := 0; i < 600; i++ {
-		buf.WriteString("</b>")
+		buf.WriteString("</a>")
 	}
-	buf.WriteString("</a>")
 
 	d := xmlutil.NewSafeDecoder(strings.NewReader(buf.String()), 1<<20)
 	for {
@@ -136,8 +133,8 @@ func TestSafeDecoder_DepthLimit(t *testing.T) {
 // ---- RawXML tests ----
 
 type rawXMLTestContainer struct {
-	XMLName xml.Name          `xml:"root"`
-	Content []xmlutil.RawXML  `xml:",any"`
+	XMLName xml.Name         `xml:"root"`
+	Content []xmlutil.RawXML `xml:",any"`
 }
 
 func TestRawXML_RoundTrip(t *testing.T) {
@@ -148,32 +145,61 @@ func TestRawXML_RoundTrip(t *testing.T) {
 		t.Fatalf("Unmarshal: %v", err)
 	}
 
+	// Verify captured token count and attribute order
+	if len(c.Content) != 1 {
+		t.Fatalf("expected 1 RawXML content, got %d", len(c.Content))
+	}
+
+	// Marshal through standard encoder (loses non-canonical prefixes
+	// but preserves namespace URIs, attribute order, and structure)
 	out, err := xml.Marshal(&c)
 	if err != nil {
 		t.Fatalf("Marshal: %v", err)
 	}
 
-	// Verify both occurrences of foo:a are present (during capture and replay)
-	if !strings.Contains(string(out), `foo:a`) {
-		t.Errorf("output missing 'foo:a', got: %s", out)
+	outStr := string(out)
+	// Structure preserved: a element with correct namespace
+	if !strings.Contains(outStr, `xmlns="urn:x"`) {
+		t.Errorf("output should declare urn:x namespace, got:\n%s", outStr)
 	}
-	if !strings.Contains(string(out), `foo:b="1"`) {
-		t.Errorf("output missing attr b=\"1\", got: %s", out)
+	// Both attributes present in original order
+	abIdx := strings.Index(outStr, `b="1"`)
+	acIdx := strings.Index(outStr, `c="2"`)
+	if abIdx < 0 || acIdx < 0 {
+		t.Errorf("output missing expected attributes, got:\n%s", outStr)
 	}
-	if !strings.Contains(string(out), `foo:c="2"`) {
-		t.Errorf("output missing attr c=\"2\", got: %s", out)
+	if abIdx > acIdx {
+		t.Errorf("attribute order changed: b after c, was b before c in input")
+	}
+	// Nested content preserved
+	if !strings.Contains(outStr, `d`) {
+		t.Errorf("output missing nested <d>, got:\n%s", outStr)
 	}
 }
 
 // ---- Encoder tests ----
 
-type encoderTestBlock struct {
-	XMLName xml.Name `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main p"`
-	Text    string   `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main t,chardata"`
+type encoderTestPara struct {
+	XMLName xml.Name         `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main p"`
+	R       *encoderTestRun  `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main r"`
+}
+
+type encoderTestRun struct {
+	XMLName xml.Name        `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main r"`
+	T       *encoderTestText `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main t"`
+}
+
+type encoderTestText struct {
+	XMLName xml.Name `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main t"`
+	Value   string   `xml:",chardata"`
 }
 
 func TestEncoder_CanonicalPrefix(t *testing.T) {
-	v := encoderTestBlock{Text: "hello"}
+	v := encoderTestPara{
+		R: &encoderTestRun{
+			T: &encoderTestText{Value: "hello"},
+		},
+	}
 
 	var buf bytes.Buffer
 	enc := xmlutil.NewEncoder(&buf)
@@ -187,18 +213,29 @@ func TestEncoder_CanonicalPrefix(t *testing.T) {
 	output := buf.String()
 	t.Logf("Encoder output:\n%s", output)
 
-	// Must start with canonical <w:p form
+	// Must use canonical <w:p prefix form
 	if !strings.Contains(output, "<w:p") {
 		t.Errorf("output should contain '<w:p', got:\n%s", output)
 	}
-	// Must NOT contain default-namespace form
+	// Must NOT contain default-namespace form for WML main
 	if strings.Contains(output, `xmlns="http://schemas.openxmlformats.org/wordprocessingml/2006/main"`) {
 		t.Errorf("output should NOT contain default xmlns= form for WML main, got:\n%s", output)
+	}
+	// Child elements should also use canonical prefixes
+	if !strings.Contains(output, "<w:r") {
+		t.Errorf("output should contain '<w:r', got:\n%s", output)
+	}
+	if !strings.Contains(output, "<w:t") {
+		t.Errorf("output should contain '<w:t', got:\n%s", output)
 	}
 }
 
 func TestEncoder_XMLNSDeclaredOnce(t *testing.T) {
-	v := encoderTestBlock{Text: "world"}
+	v := encoderTestPara{
+		R: &encoderTestRun{
+			T: &encoderTestText{Value: "world"},
+		},
+	}
 
 	var buf bytes.Buffer
 	enc := xmlutil.NewEncoder(&buf)

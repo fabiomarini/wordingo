@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 1
-current_phase_name: Foundation
+current_phase: 01
+current_phase_name: foundation
 status: executing
 stopped_at: Phase 1 context gathered
-last_updated: "2026-07-25T15:18:12.307Z"
+last_updated: "2026-07-25T15:33:56.078Z"
 last_activity: 2026-07-25
-last_activity_desc: PRD written, planning rewritten post-critique
+last_activity_desc: Phase 01 execution started
 progress:
   total_phases: 6
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 3
+  completed_plans: 1
   percent: 0
 ---
 
@@ -25,14 +25,14 @@ See: .planning/PROJECT.md (updated 2026-07-25)
 PRD: .planning/PRD.md (authoritative, 2026-07-25)
 
 **Core value:** Create styled .docx documents in Go — from a template or from scratch — that open in Word looking exactly as designed.
-**Current focus:** Phase 1: Foundation
+**Current focus:** Phase 01 — foundation
 
 ## Current Position
 
-Phase: 1 of 6 (Foundation)
-Plan: 0 of 3 in current phase
+Phase: 01 (foundation) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-07-25 — PRD written, planning rewritten post-critique
+Last activity: 2026-07-25 — Phase 01 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -55,6 +55,7 @@ Logged in PROJECT.md Key Decisions table.
 - Library not CLI; from-scratch, no port — pending
 - Three separate style operations — pending
 - Style thesis proven before rich content — pending
+- [Phase 01]: OPC layer: high-water rId allocator, manifest-excluded DiffParts, ratio warnings not errors — Plan acceptance criteria required monotonicity across deletes and byte-identity scoped to unmodeled parts
 
 ### Pending Todos
 
@@ -70,9 +71,10 @@ None yet.
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
 | v2 features | Field codes, comments, bookmarks, SDT, tracked changes, charts, equations, struct→table | Behind v1 validation | 2026-07-25 |
+| Phase 01 P01 | 12 min | 3 tasks | 12 files |
 
 ## Session Continuity
 
-Last session: 2026-07-25T14:56:31.292Z
+Last session: 2026-07-25T15:33:42.649Z
 Stopped at: Phase 1 context gathered
 Resume file: .planning/phases/01-foundation/01-CONTEXT.md

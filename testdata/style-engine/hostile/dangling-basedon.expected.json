@@ -1,0 +1,18 @@
+{
+  "template": "dangling-basedon.docx",
+  "description": "Dangling basedOn reference (D-07): Ghost.basedOn=Missing (not in styles.xml or latentStyles), warning emitted",
+  "cases": [
+    {
+      "id": "dangling-para",
+      "locator": "paragraph[0]",
+      "pStyle": "Ghost",
+      "expected": {
+        "pPr": {
+          "spacing": {"before": 200}
+        },
+        "rPr": {}
+      },
+      "warnings": ["\"Missing\" not found in styles.xml or latentStyles"]
+    }
+  ]
+}

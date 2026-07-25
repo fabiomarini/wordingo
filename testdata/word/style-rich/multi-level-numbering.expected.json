@@ -1,0 +1,45 @@
+{
+  "template": "multi-level-numbering.docx",
+  "description": "3-level numbering with level pPr ind merged over cloned packages",
+  "cases": [
+    {
+      "id": "ilvl-0",
+      "locator": "paragraph[0]",
+      "pStyle": "Normal",
+      "expected": {
+        "pPr": {
+          "ind": {"left": 720},
+          "numPr": {"numId": 1, "ilvl": 0}
+        },
+        "rPr": {}
+      },
+      "warnings": []
+    },
+    {
+      "id": "ilvl-1",
+      "locator": "paragraph[1]",
+      "pStyle": "Normal",
+      "expected": {
+        "pPr": {
+          "ind": {"left": 1440},
+          "numPr": {"numId": 1, "ilvl": 1}
+        },
+        "rPr": {}
+      },
+      "warnings": []
+    },
+    {
+      "id": "ilvl-2",
+      "locator": "paragraph[2]",
+      "pStyle": "Normal",
+      "expected": {
+        "pPr": {
+          "ind": {"left": 2160},
+          "numPr": {"numId": 1, "ilvl": 2}
+        },
+        "rPr": {}
+      },
+      "warnings": []
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "template": "circular-basedon.docx",
+  "description": "Circular basedOn chain (D-05): CycleA->CycleB->CycleA, warning emitted, no panic",
+  "cases": [
+    {
+      "id": "cycle-para",
+      "locator": "paragraph[0]",
+      "pStyle": "CycleA",
+      "expected": {
+        "pPr": {
+          "spacing": {"before": 100}
+        },
+        "rPr": {}
+      },
+      "warnings": ["circular basedOn chain at \"CycleA\""]
+    }
+  ]
+}

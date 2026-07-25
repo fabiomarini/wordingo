@@ -1,0 +1,18 @@
+{
+  "template": "missing-numid.docx",
+  "description": "Missing numId (D-07): numId=999 not in numbering.xml, warning emitted, numPr preserved",
+  "cases": [
+    {
+      "id": "missing-numid-para",
+      "locator": "paragraph[0]",
+      "pStyle": "Normal",
+      "expected": {
+        "pPr": {
+          "numPr": {"numId": 999, "ilvl": 0}
+        },
+        "rPr": {}
+      },
+      "warnings": ["numId 999 not found"]
+    }
+  ]
+}

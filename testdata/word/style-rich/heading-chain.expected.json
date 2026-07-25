@@ -1,0 +1,29 @@
+{
+  "template": "heading-chain.docx",
+  "description": "Heading2\u2192Heading1\u2192Normal chain with theme colors (ROADMAP success criterion #4)",
+  "cases": [
+    {
+      "id": "h2-para-1",
+      "locator": "paragraph[0]",
+      "pStyle": "Heading2",
+      "expected": {
+        "pPr": {
+          "spacing": {"before": 240, "after": 120},
+          "keepNext": true,
+          "outlineLvl": 1,
+          "ind": null,
+          "jc": null,
+          "numPr": null
+        },
+        "rPr": {
+          "sz": {"val": 28},
+          "b": true,
+          "color": {"val": "156082", "themeColor": null},
+          "rFonts": {"asciiTheme": "majorHAnsi"},
+          "i": null
+        }
+      },
+      "warnings": []
+    }
+  ]
+}

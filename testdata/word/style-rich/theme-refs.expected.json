@@ -1,0 +1,42 @@
+{
+  "template": "theme-refs.docx",
+  "description": "Theme color references (accent1, dark1 sysClr, hyperlink) concretized over cloned package",
+  "cases": [
+    {
+      "id": "theme-accent1",
+      "locator": "paragraph[0]",
+      "pStyle": "ParaAccent",
+      "expected": {
+        "pPr": {},
+        "rPr": {
+          "color": {"val": "156082", "themeColor": null}
+        }
+      },
+      "warnings": []
+    },
+    {
+      "id": "theme-dark1",
+      "locator": "paragraph[1]",
+      "pStyle": null,
+      "expected": {
+        "pPr": {},
+        "rPr": {
+          "color": {"val": "000000", "themeColor": null}
+        }
+      },
+      "warnings": []
+    },
+    {
+      "id": "theme-hyperlink",
+      "locator": "paragraph[2]",
+      "pStyle": "ParaHyperlink",
+      "expected": {
+        "pPr": {},
+        "rPr": {
+          "color": {"val": "467886", "themeColor": null}
+        }
+      },
+      "warnings": []
+    }
+  ]
+}

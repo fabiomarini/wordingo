@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 01
+current_phase: 02
+current_phase_name: style-engine
 status: executing
-stopped_at: Phase 2 context gathered
-last_updated: "2026-07-25T18:07:23.069Z"
+stopped_at: Completed 02-01-PLAN.md (resolver core)
+last_updated: "2026-07-25T18:50:58.874Z"
 last_activity: 2026-07-25
-last_activity_desc: Phase 01 marked complete
+last_activity_desc: Phase 01 verified, gaps closed
 progress:
   total_phases: 6
-  completed_phases: 0
-  total_plans: 3
-  completed_plans: 2
-  percent: 0
-current_phase_name: foundation
+  completed_phases: 1
+  total_plans: 7
+  completed_plans: 4
+  percent: 17
 ---
 
 # Project State
@@ -25,24 +25,23 @@ See: .planning/PROJECT.md (updated 2026-07-25)
 PRD: .planning/PRD.md (authoritative, 2026-07-25)
 
 **Core value:** Create styled .docx documents in Go — from a template or from scratch — that open in Word looking exactly as designed.
-**Current focus:** Phase 01 — foundation
+**Current focus:** Phase 02 — style engine
 
 ## Current Position
 
-Phase: 01 — COMPLETE
-Plan: 3 of 3
-Status: Ready to execute
-Last activity: 2026-07-25 — Phase 01 marked complete
+Phase: 02 — style-engine
+Plan: 1 of 3
+Last activity: 2026-07-25 — Plan 02-01 (resolver core) complete
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██░░░░░░░░] 17%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0
-- Average duration: N/A
-- Total execution time: 0 hours
+- Total plans completed: 4 (Phase 1: 3, Phase 2: 1)
+- Average duration: 21 min/plan
+- Total execution time: 83 min
 
 ## Accumulated Context
 
@@ -50,20 +49,26 @@ Progress: [░░░░░░░░░░] 0%
 
 Logged in PROJECT.md Key Decisions table.
 
-- Build from scratch (AGPL/MIT gap) — pending
-- Stdlib only, zero deps (namespace registry trade-off accepted) — pending
-- Library not CLI; from-scratch, no port — pending
-- Three separate style operations — pending
-- Style thesis proven before rich content — pending
-- [Phase 01]: OPC layer: high-water rId allocator, manifest-excluded DiffParts, ratio warnings not errors — Plan acceptance criteria required monotonicity across deletes and byte-identity scoped to unmodeled parts
+- Build from scratch (AGPL/MIT gap) — validated (Phase 1 complete)
+- Stdlib only, zero deps (namespace registry trade-off accepted) — validated
+- Library not CLI; from-scratch, no port — validated
+- Three separate style operations — pending Phase 2
+- Style thesis proven before rich content — pending Phase 2
+- [Phase 01]: OPC layer: high-water rId allocator, manifest-excluded DiffParts, ratio warnings not errors
+- [Phase 01]: Blank doc includes webSettings.xml (Word-open repair)
+- [Phase 01]: No docProps in blank doc (unnecessary)
+- [Cross-phase]: CT_PPr OutlineLvl field required by Phase 2 — added
+- [Phase 02-01]: Memo-by-styleId with dirty-flag invalidation via Part.IsModified (Option A)
+- [Phase 02-01]: Deep-merge for CT_Spacing/CT_Ind/CT_RFonts/CT_Color; shallow override for all other fields
+- [Phase 02-01]: ThemeColor passed through UNCHANGED — 02-02 concretizes
+- [Phase 02-01]: NumPr passed through as opaque pointer — no lvl.PPr merge in resolver core
 
 ### Pending Todos
 
-None yet.
+- Commit test fixture corpus (real .docx files under testdata/)
 
 ### Blockers/Concerns
 
-- `encoding/xml` namespace fragility — mitigated by xmlutil registry in Phase 1, plan 01-02
 - Style resolution edge cases — isolated in Phase 2 with real-template corpus before content API
 
 ## Deferred Items
@@ -71,11 +76,15 @@ None yet.
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
 | v2 features | Field codes, comments, bookmarks, SDT, tracked changes, charts, equations, struct→table | Behind v1 validation | 2026-07-25 |
-| Phase 01 P01 | 12 min | 3 tasks | 12 files |
-| Phase 01-foundation P02 | 28 min | 2 tasks | 11 files |
+| Test fixtures | Real-producer .docx fixture corpus | Pending user action | 2026-07-25 |
+| Phase 01 P01 | 12 min, 3 tasks, 12 files | Complete | 2026-07-25 |
+| Phase 01-foundation P02 | 28 min, 2 tasks, 11 files | Complete | 2026-07-25 |
+| Phase 01-foundation P03 | 35 min, 2+3 tasks, 14 files | Complete | 2026-07-25 |
 
 ## Session Continuity
 
-Last session: 2026-07-25T16:36:49.779Z
-Stopped at: Phase 2 context gathered
-Resume file: .planning/phases/02-style-engine/02-CONTEXT.md
+**Last session:** 2026-07-25T18:50:58.868Z
+**Stopped at:** Completed 02-01-PLAN.md (resolver core)
+**Resume file:** None
+
+Phase 02 context and plans ready. Execute with `/gsd-execute-phase 02`.

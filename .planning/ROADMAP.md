@@ -28,22 +28,22 @@ Six phases, each with a hard gate that proves the phase's thesis before proceedi
   4. ~60 WML types marshal/unmarshal bidirectionally; whitespace and xml:space survive
   5. Safety limits enforced (zip bomb, entity expansion, path traversal)
 
-**Plans**: 2/3 plans executed
+**Plans**: 3/3 plans executed — DONE
 
 Plans:
 
 - [x] 01-01-PLAN.md
 - [x] 01-02-PLAN.md
-- [ ] 01-03-PLAN.md
+- [x] 01-03-PLAN.md
 
 **Wave 1**
 
 - [x] 01-01: opc package — ZIP I/O, content types, relationship graph, canonical entry ordering, safety limits
-- [ ] 01-02: xmlutil namespace registry + wml essential types (~60 structs) with round-trip tests
+- [x] 01-02: xmlutil namespace registry + wml essential types (~60 structs) with round-trip tests
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 01-03: Blank document generator — default styles, theme, fontTable, settings, sectPr; Word-open gate
+- [x] 01-03: Blank document generator — default styles, theme, fontTable, settings, sectPr; Word-open gate
 
 ### Phase 2: Style Engine
 
@@ -61,14 +61,14 @@ Plans:
 
 Plans:
 
-- [ ] 02-01-PLAN.md — Style resolver — recursive basedOn merger, docDefaults, latentStyles, cycle detection
+- [x] 02-01-PLAN.md — Style resolver — recursive basedOn merger, docDefaults, latentStyles, cycle detection
 - [ ] 02-02-PLAN.md — Theme color + numbering resolution; font table handling
 - [ ] 02-03-PLAN.md — Dependency graph cloner (byte pass-through of 5 style parts; STYLE-CLONE-01)
 - [ ] 02-04-PLAN.md — Corpus validation — resolver/theme/numbering effective-props validation over cloned packages; Heading2 chain canonical case (STYLE-CLONE-02)
 
 **Wave 1** *(parallel — no cross-deps)*
 
-- [ ] 02-01: Style resolver — recursive basedOn merger, docDefaults, latentStyles, cycle detection
+- [x] 02-01: Style resolver — recursive basedOn merger, docDefaults, latentStyles, cycle detection
 - [ ] 02-03: Dependency graph cloner — byte pass-through of 5 style parts via opc.MarkModified
 
 **Wave 2** *(blocked on Wave 1 — 02-01 resolver must exist)*
@@ -161,11 +161,11 @@ Plans:
 
 | Phase | Plans Complete | Status | Gate |
 |-------|----------------|--------|------|
-| 1. Foundation | 2/3 | In Progress|  |
-| 2. Style Engine | 0/4 | Not started | Template styles render correctly |
+| 1. Foundation | 3/3 | ✅ Complete | Blank .docx opens in Word without repair |
+| 2. Style Engine | 1/4 | In progress | Template styles render correctly |
 | 3. Document Model | 0/2 | Not started | Zero unintended diffs on round-trip |
 | 4. Content API | 0/2 | Not started | Formatted text doc programmatically |
 | 5. Rich Content | 0/3 | Not started | Complete business document |
 | 6. Merge & Edit | 0/2 | Not started | UC1–UC4 green, v1.0 tagged |
 
-Total: 16 plans, 33 v1 requirements, 0 complete.
+Total: 16 plans, 33 v1 requirements, 3 complete.

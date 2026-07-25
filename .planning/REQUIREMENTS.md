@@ -10,7 +10,7 @@
 
 - [x] **OPC-01**: Open .docx ZIP as OPC package — parse [Content_Types].xml, _rels/.rels, per-part .rels
 - [x] **OPC-02**: Write valid OPC packages with canonical ZIP entry ordering (ECMA-376 Part 2 §9.1.4.2)
-- [ ] **OPC-03**: Namespace resolution by URI across 40+ OOXML namespaces; files from Word, LibreOffice, Google Docs parse identically
+- [x] **OPC-03**: Namespace resolution by URI across 40+ OOXML namespaces; files from Word, LibreOffice, Google Docs parse identically
 - [x] **OPC-04**: Pass-through preservation — unmodeled parts stored as raw bytes, re-emitted identically on save
 - [x] **OPC-05**: Read Transitional + Strict conformance; write Transitional; match source conformance when editing
 - [x] **OPC-06**: Relationship graph integrity — unique rId generation, no reuse, consistency validation on save
@@ -18,10 +18,10 @@
 
 ### WML Schema
 
-- [ ] **WML-01**: Go structs for ~60 essential WordprocessingML types (document, body, p, r, t, pPr, rPr, styles, numbering, tbl, sectPr, hdr, ftr)
-- [ ] **WML-02**: Bidirectional marshal/unmarshal with correct namespace URIs
-- [ ] **WML-03**: Whitespace fidelity — xml:space="preserve" honored on read/write; run boundaries never merged implicitly
-- [ ] **WML-04**: Unknown child elements hoarded and re-emitted on save
+- [x] **WML-01**: Go structs for ~60 essential WordprocessingML types (document, body, p, r, t, pPr, rPr, styles, numbering, tbl, sectPr, hdr, ftr)
+- [x] **WML-02**: Bidirectional marshal/unmarshal with correct namespace URIs
+- [x] **WML-03**: Whitespace fidelity — xml:space="preserve" honored on read/write; run boundaries never merged implicitly
+- [x] **WML-04**: Unknown child elements hoarded and re-emitted on save
 
 ### Style Engine
 

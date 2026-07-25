@@ -28,12 +28,12 @@ Six phases, each with a hard gate that proves the phase's thesis before proceedi
   4. ~60 WML types marshal/unmarshal bidirectionally; whitespace and xml:space survive
   5. Safety limits enforced (zip bomb, entity expansion, path traversal)
 
-**Plans**: 1/3 plans executed
+**Plans**: 2/3 plans executed
 
 Plans:
 
 - [x] 01-01-PLAN.md
-- [ ] 01-02-PLAN.md
+- [x] 01-02-PLAN.md
 - [ ] 01-03-PLAN.md
 
 **Wave 1**
@@ -147,7 +147,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Gate |
 |-------|----------------|--------|------|
-| 1. Foundation | 1/3 | In Progress|  |
+| 1. Foundation | 2/3 | In Progress|  |
 | 2. Style Engine | 0/3 | Not started | Template styles render correctly |
 | 3. Document Model | 0/2 | Not started | Zero unintended diffs on round-trip |
 | 4. Content API | 0/2 | Not started | Formatted text doc programmatically |

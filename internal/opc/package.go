@@ -9,6 +9,7 @@ package opc
 
 import (
 	"archive/zip"
+	"bytes"
 	"fmt"
 	"io"
 	"strings"
@@ -242,6 +243,103 @@ func (p *Package) detectConformance() Conformance {
 		return Strict
 	}
 	return Transitional
+}
+
+// Save writes the package to w in canonical entry order (OPC-02) with
+// deterministic headers. Untouched parts sourced from the original
+// archive are raw-copied (zip.Writer.Copy) so their payloads survive
+// byte-identical (OPC-04); modified parts are written from their
+// replacement payloads. The relationship graph is validated before any
+// bytes reach w (OPC-06) — on failure nothing is written.
+func (p *Package) Save(w io.Writer) error {
+	// Live part set (deletions excluded).
+	live := make(map[string]bool, len(p.Parts))
+	for name, part := range p.Parts {
+		if !part.deleted {
+			live[name] = true
+		}
+	}
+
+	// Validate relationship graph (OPC-06).
+	for src, rs := range p.Rels {
+		if err := rs.validate(src, live); err != nil {
+			return err
+		}
+	}
+
+	// Every live part must have a content type.
+	for name := range live {
+		if isRelsPath(name) || name == "[Content_Types].xml" {
+			continue
+		}
+		if p.ContentTypes.TypeFor(name) == "" {
+			return fmt.Errorf("opc: part %s has no content type: %w",
+				name, ErrInvalidPackage)
+		}
+	}
+
+	// Serialized overrides: content types + every relationship set.
+	overrides := make(map[string][]byte, len(p.Rels)+1)
+	ctBytes, err := p.ContentTypes.serialize()
+	if err != nil {
+		return err
+	}
+	overrides["[Content_Types].xml"] = ctBytes
+	for src, rs := range p.Rels {
+		b, err := rs.serialize()
+		if err != nil {
+			return err
+		}
+		overrides[relsPathFor(src)] = b
+	}
+
+	// Buffer everything: validation/serialization failures must never
+	// produce partial output on w.
+	var buf bytes.Buffer
+	zw := zip.NewWriter(&buf)
+
+	names := make([]string, 0, len(live))
+	for name := range live {
+		names = append(names, name)
+	}
+	for _, name := range CanonicalOrder(names) {
+		part := p.Parts[name]
+		if payload, ok := overrides[name]; ok {
+			if err := writeDeterministic(zw, name, payload); err != nil {
+				return err
+			}
+			continue
+		}
+		if part.modified {
+			if err := writeDeterministic(zw, name, part.data); err != nil {
+				return err
+			}
+			continue
+		}
+		// Untouched original part: raw pass-through (OPC-04).
+		if err := zw.Copy(part.file); err != nil {
+			return fmt.Errorf("opc: copy part %s: %w", name, err)
+		}
+	}
+	if err := zw.Close(); err != nil {
+		return fmt.Errorf("opc: finalize zip: %w", err)
+	}
+	if _, err := w.Write(buf.Bytes()); err != nil {
+		return fmt.Errorf("opc: write package: %w", err)
+	}
+	return nil
+}
+
+// writeDeterministic writes one part with a fixed-timestamp header.
+func writeDeterministic(zw *zip.Writer, name string, payload []byte) error {
+	w, err := zw.CreateHeader(NewDeterministicHeader(name))
+	if err != nil {
+		return fmt.Errorf("opc: create part %s: %w", name, err)
+	}
+	if _, err := w.Write(payload); err != nil {
+		return fmt.Errorf("opc: write part %s: %w", name, err)
+	}
+	return nil
 }
 
 // validatePartName rejects names that escape the package or are

@@ -95,8 +95,14 @@ func HasFixtures(t *testing.T) bool {
 }
 
 // DiffParts compares two unzipped part sets per part (D-04 harness).
+// Modeled manifests ([Content_Types].xml and .rels parts) are
+// re-serialized canonically on save, so they are excluded from the
+// byte comparison; OPC-04 byte-identity covers unmodeled parts.
 func DiffParts(t *testing.T, a, b []byte) {
 	t.Helper()
+	manifest := func(name string) bool {
+		return name == "[Content_Types].xml" || isRelsPath(name)
+	}
 	partsOf := func(data []byte) map[string][]byte {
 		zr, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
 		if err != nil {
@@ -119,6 +125,9 @@ func DiffParts(t *testing.T, a, b []byte) {
 	}
 	pa, pb := partsOf(a), partsOf(b)
 	for name, payload := range pa {
+		if manifest(name) {
+			continue
+		}
 		other, ok := pb[name]
 		if !ok {
 			t.Errorf("part %s missing from saved package", name)
@@ -314,4 +323,142 @@ func itoa(i int) string {
 		i /= 10
 	}
 	return string(b[p:])
+}
+
+// --- Task 2: save-path tests ----------------------------------------
+
+func TestCanonicalOrder(t *testing.T) {
+	shuffled := []string{
+		"customXml/item1.xml",
+		"word/styles.xml",
+		"word/_rels/document.xml.rels",
+		"docProps/core.xml",
+		"word/document.xml",
+		"word/_rels/styles.xml.rels",
+		"_rels/.rels",
+		"word/theme/theme1.xml",
+		"[Content_Types].xml",
+	}
+	got := CanonicalOrder(shuffled)
+	want := []string{
+		"[Content_Types].xml",
+		"_rels/.rels",
+		"word/document.xml",
+		"word/_rels/document.xml.rels",
+		"word/styles.xml",
+		"word/_rels/styles.xml.rels",
+		"word/theme/theme1.xml",
+		"customXml/item1.xml",
+		"docProps/core.xml",
+	}
+	if len(got) != len(want) {
+		t.Fatalf("CanonicalOrder len = %d, want %d (%v)", len(got), len(want), got)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("CanonicalOrder[%d] = %q, want %q\nfull: %v", i, got[i], want[i], got)
+		}
+	}
+}
+
+func TestRoundTrip(t *testing.T) {
+	src := buildSyntheticZip(t)
+	pkg := openBytes(t, src)
+
+	var out bytes.Buffer
+	if err := pkg.Save(&out); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+	// Per-part byte diff (D-04) — unmodeled customXml part must be
+	// byte-identical via raw pass-through (OPC-04).
+	DiffParts(t, src, out.Bytes())
+
+	// Saved package starts with [Content_Types].xml then _rels/.rels.
+	zr, err := zip.NewReader(bytes.NewReader(out.Bytes()), int64(out.Len()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if zr.File[0].Name != "[Content_Types].xml" || zr.File[1].Name != "_rels/.rels" {
+		t.Errorf("first entries = %q, %q", zr.File[0].Name, zr.File[1].Name)
+	}
+}
+
+func TestRoundTripHostileFixture(t *testing.T) {
+	if !HasFixtures(t) {
+		return
+	}
+	data, err := os.ReadFile(filepath.Join("..", "..", "testdata", "hostile", "customxml-glossary.docx"))
+	if err != nil {
+		t.Skip("hostile fixture not present")
+	}
+	pkg, err := Open(bytes.NewReader(data), int64(len(data)))
+	if err != nil {
+		t.Fatalf("Open hostile fixture: %v", err)
+	}
+	var out bytes.Buffer
+	if err := pkg.Save(&out); err != nil {
+		t.Fatalf("Save hostile fixture: %v", err)
+	}
+	DiffParts(t, data, out.Bytes())
+}
+
+func TestSave(t *testing.T) {
+	t.Run("dangling target fails closed", func(t *testing.T) {
+		pkg := openBytes(t, buildSyntheticZip(t))
+		// Corrupt the graph: point root rel at a nonexistent part.
+		pkg.Rels[""].Rels[0].Target = "word/missing.xml"
+		var out bytes.Buffer
+		err := pkg.Save(&out)
+		if !errors.Is(err, ErrInvalidPackage) {
+			t.Fatalf("err = %v, want ErrInvalidPackage", err)
+		}
+		if out.Len() != 0 {
+			t.Errorf("wrote %d bytes despite validation failure", out.Len())
+		}
+	})
+
+	t.Run("deterministic", func(t *testing.T) {
+		pkg := openBytes(t, buildSyntheticZip(t))
+		var a, b bytes.Buffer
+		if err := pkg.Save(&a); err != nil {
+			t.Fatal(err)
+		}
+		if err := pkg.Save(&b); err != nil {
+			t.Fatal(err)
+		}
+		if !bytes.Equal(a.Bytes(), b.Bytes()) {
+			t.Error("two consecutive Saves produced different bytes")
+		}
+	})
+
+	t.Run("modified part serializes, untouched stay raw", func(t *testing.T) {
+		src := buildSyntheticZip(t)
+		pkg := openBytes(t, src)
+		newDoc := []byte(strings.Replace(synDocument, "<w:p/>", "<w:p><w:r><w:t>hi</w:t></w:r></w:p>", 1))
+		pkg.MarkModified("word/document.xml", newDoc)
+		var out bytes.Buffer
+		if err := pkg.Save(&out); err != nil {
+			t.Fatal(err)
+		}
+		zr, err := zip.NewReader(bytes.NewReader(out.Bytes()), int64(out.Len()))
+		if err != nil {
+			t.Fatal(err)
+		}
+		payloads := map[string][]byte{}
+		for _, f := range zr.File {
+			rc, _ := f.Open()
+			b, _ := io.ReadAll(rc)
+			rc.Close()
+			payloads[f.Name] = b
+		}
+		if !bytes.Equal(payloads["word/document.xml"], newDoc) {
+			t.Error("modified part payload mismatch")
+		}
+		if !bytes.Equal(payloads["customXml/item1.xml"], synCustomXML) {
+			t.Error("untouched unmodeled part not byte-identical")
+		}
+		if !bytes.Equal(payloads["word/styles.xml"], []byte(synStyles)) {
+			t.Error("untouched modeled part not byte-identical")
+		}
+	})
 }

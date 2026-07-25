@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 02
 current_phase_name: style-engine
 status: executing
-stopped_at: Completed 02-03-PLAN.md (cloner)
-last_updated: "2026-07-25T18:55:58.314Z"
+stopped_at: Completed 02-02-PLAN.md (theme + numbering resolution)
+last_updated: "2026-07-25T19:04:49.000Z"
 last_activity: 2026-07-25
-last_activity_desc: Plan 02-01 (resolver core) complete
+last_activity_desc: Plan 02-02 (theme + numbering resolution) complete
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 7
-  completed_plans: 5
+  completed_plans: 6
   percent: 17
 ---
 
@@ -30,18 +30,18 @@ PRD: .planning/PRD.md (authoritative, 2026-07-25)
 ## Current Position
 
 Phase: 02 — style-engine
-Plan: 2 of 3
-Last activity: 2026-07-25 — Plan 02-01 (resolver core) complete
+Plan: 3 of 3
+Last activity: 2026-07-25 — Plan 02-02 (theme + numbering resolution) complete
 
-Progress: [██░░░░░░░░] 17%
+Progress: [███░░░░░░░] 29%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 4 (Phase 1: 3, Phase 2: 1)
-- Average duration: 21 min/plan
-- Total execution time: 83 min
+- Total plans completed: 5 (Phase 1: 3, Phase 2: 2)
+- Average duration: 18 min/plan
+- Total execution time: 90 min
 
 ## Accumulated Context
 
@@ -62,6 +62,11 @@ Logged in PROJECT.md Key Decisions table.
 - [Phase 02-01]: Deep-merge for CT_Spacing/CT_Ind/CT_RFonts/CT_Color; shallow override for all other fields
 - [Phase 02-01]: ThemeColor passed through UNCHANGED — 02-02 concretizes
 - [Phase 02-01]: NumPr passed through as opaque pointer — no lvl.PPr merge in resolver core
+- [Phase 02-02]: Theme colors concretized at resolve-time (D-06) — ResolveRun calls theme.ResolveColor
+- [Phase 02-02]: Numbering level pPr merged at resolve-time (D-13) — ResolveParagraph calls numbering.ResolveLvl + mergePPr
+- [Phase 02-02]: sysClr lastClr handling for dark1/light1 (lastClr attr, not val)
+- [Phase 02-02]: Token-scan approach for theme1.xml (avoids full DrawingML parse)
+- [Phase 02-02]: Shade applied first, then tint (Pitfall 5 — Word's observed order)
 
 ### Pending Todos
 
@@ -80,12 +85,13 @@ Logged in PROJECT.md Key Decisions table.
 | Phase 01 P01 | 12 min, 3 tasks, 12 files | Complete | 2026-07-25 |
 | Phase 01-foundation P02 | 28 min, 2 tasks, 11 files | Complete | 2026-07-25 |
 | Phase 01-foundation P03 | 35 min, 2+3 tasks, 14 files | Complete | 2026-07-25 |
+| Phase 02-style-engine P02 | 7 min | 6 tasks | 8 files |
 | Phase 02-style-engine P03 | 2 min | 1 tasks | 3 files |
 
 ## Session Continuity
 
-**Last session:** 2026-07-25T18:55:58.308Z
-**Stopped at:** Completed 02-03-PLAN.md (cloner)
+**Last session:** 2026-07-25T19:04:49.000Z
+**Stopped at:** Completed 02-02-PLAN.md (theme + numbering resolution)
 **Resume file:** None
 
 Phase 02 context and plans ready. Execute with `/gsd-execute-phase 02`.

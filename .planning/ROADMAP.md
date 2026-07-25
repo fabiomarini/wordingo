@@ -62,7 +62,7 @@ Plans:
 Plans:
 
 - [x] 02-01-PLAN.md — Style resolver — recursive basedOn merger, docDefaults, latentStyles, cycle detection
-- [ ] 02-02-PLAN.md — Theme color + numbering resolution; font table handling
+- [x] 02-02-PLAN.md — Theme color + numbering resolution; font table handling
 - [x] 02-03-PLAN.md — Dependency graph cloner (byte pass-through of 5 style parts; STYLE-CLONE-01)
 - [ ] 02-04-PLAN.md — Corpus validation — resolver/theme/numbering effective-props validation over cloned packages; Heading2 chain canonical case (STYLE-CLONE-02)
 
@@ -73,7 +73,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 — 02-01 resolver must exist)*
 
-- [ ] 02-02: Theme color concretization + numbering level resolution wired into resolver
+- [x] 02-02: Theme color concretization + numbering level resolution wired into resolver
 
 **Wave 3** *(blocked on Waves 1+2 — corpus validation exercises the full stack)*
 

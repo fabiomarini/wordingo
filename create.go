@@ -96,6 +96,50 @@ func newBlankPackage() *opc.Package {
 	return pkg
 }
 
+// newTemplateTarget returns a fresh OPC package with infrastructure
+// parts (content types, relationships) but NO style parts — no
+// word/styles.xml, settings.xml, webSettings.xml, fontTable.xml, or
+// theme/theme1.xml.  This satisfies CloneStyles' fresh-empty-target
+// precondition (D-08) for FromTemplate/OpenTemplate operations.
+//
+// The package has:
+//   - [Content_Types].xml (defaults: rels/xml; override: document.xml)
+//   - _rels/.rels (root → word/document.xml)
+//   - word/_rels/document.xml.rels (empty — CloneStyles adds relationships)
+//
+// word/document.xml must be added via MarkModified before Save.
+func newTemplateTarget() *opc.Package {
+	pkg := &opc.Package{
+		Parts: make(map[string]*opc.Part),
+		ContentTypes: &opc.ContentTypes{
+			Defaults: map[string]string{
+				"rels": ctRels,
+				"xml":  ctXML,
+			},
+			Overrides: map[string]string{
+				"/word/document.xml": ctMain,
+			},
+		},
+		Rels:        make(map[string]*opc.Relationships),
+		Conformance: opc.Transitional,
+	}
+
+	addPart(pkg, "[Content_Types].xml", nil)
+	addPart(pkg, "_rels/.rels", nil)
+	addPart(pkg, "word/_rels/document.xml.rels", nil)
+
+	pkg.Rels[""] = &opc.Relationships{
+		Rels: []opc.Relationship{
+			{ID: "rId1", Type: relOfficeDocument, Target: "word/document.xml"},
+		},
+	}
+	pkg.Rels["word/document.xml"] = &opc.Relationships{
+		Rels: []opc.Relationship{},
+	}
+
+	return pkg
+}
+
 func addPart(pkg *opc.Package, name string, data []byte) {
 	pkg.MarkModified(name, data)
 }
@@ -146,3 +190,39 @@ func buildDocumentXML() []byte {
 }
 
 func strPtr(s string) *string { return &s }
+
+func ptrInt64(v int64) *int64 { return &v }
+
+// defaultSectPr returns a CT_SectPr with Letter page size (12240×15840 twips),
+// 1-inch margins (1440 twips), empty columns, and no header/footer references.
+// Used by buildEmptyBodyXML and OpenTemplateReader (Pitfall 4 — no HdrFtrRef/FtrRef).
+func defaultSectPr() *wml.CT_SectPr {
+	return &wml.CT_SectPr{
+		PgSz:    &wml.CT_PgSz{W: ptrInt64(12240), H: ptrInt64(15840)},
+		PgMar:   &wml.CT_PgMar{Top: ptrInt64(1440), Right: ptrInt64(1440), Bottom: ptrInt64(1440), Left: ptrInt64(1440)},
+		Cols:    &wml.CT_Cols{},
+		DocGrid: &wml.CT_DocGrid{},
+	}
+}
+
+// buildEmptyBodyXML returns serialized CT_Document with no paragraphs or tables,
+// only a single CT_SectPr with Letter page + 1in margins. Used by FromTemplate
+// (CREATE-03) to provide a clean body with template styles.
+func buildEmptyBodyXML() []byte {
+	doc := &wml.CT_Document{
+		Body: &wml.CT_Body{
+			SectPr: defaultSectPr(),
+		},
+	}
+	var buf bytes.Buffer
+	buf.WriteString(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`)
+	buf.WriteByte('\n')
+	enc := xmlutil.NewEncoder(&buf)
+	if err := enc.Encode(doc); err != nil {
+		panic(fmt.Sprintf("wordingo: encode empty body: %v", err))
+	}
+	if err := enc.Flush(); err != nil {
+		panic(fmt.Sprintf("wordingo: flush empty body: %v", err))
+	}
+	return buf.Bytes()
+}

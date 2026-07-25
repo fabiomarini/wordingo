@@ -204,22 +204,6 @@ func fixtureMultiHeadingXML(t *testing.T) []byte {
 	return encodeDocumentXML(t, doc)
 }
 
-// defaultSectPr returns the standard Letter-size section properties.
-func defaultSectPr() *wml.CT_SectPr {
-	sz12240 := int64(12240)
-	sz15840 := int64(15840)
-	margin1440 := int64(1440)
-	return &wml.CT_SectPr{
-		PgSz: &wml.CT_PgSz{W: &sz12240, H: &sz15840},
-		PgMar: &wml.CT_PgMar{
-			Top: &margin1440, Right: &margin1440,
-			Bottom: &margin1440, Left: &margin1440,
-		},
-		Cols:    &wml.CT_Cols{},
-		DocGrid: &wml.CT_DocGrid{},
-	}
-}
-
 // generateFixtures writes all on-disk fixture files to testdata/roundtrip/.
 func generateFixtures(t *testing.T) {
 	t.Helper()

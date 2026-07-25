@@ -27,7 +27,7 @@
 
 Three distinct operations, explicitly separated. Do not conflate.
 
-- [ ] **STYLE-CLONE-01**: Copy template style dependency graph into target document — styles.xml + numbering.xml + fontTable.xml + theme.xml + settings.xml, with relationships and content types updated
+- [x] **STYLE-CLONE-01**: Copy template style dependency graph into target document — styles.xml + numbering.xml + fontTable.xml + theme.xml + settings.xml, with relationships and content types updated
 - [ ] **STYLE-CLONE-02**: Named styles from template applicable to new content by name
 - [ ] **STYLE-RESOLVE-01**: Resolve effective paragraph properties through the full chain: docDefaults → latentStyles → basedOn chain → direct formatting
 - [ ] **STYLE-RESOLVE-02**: Resolve effective run properties through the full chain, including run styles
@@ -99,9 +99,9 @@ Deferred behind v1 validation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| OPC-01..07 | Phase 1 | Pending |
-| WML-01..04 | Phase 1 | Pending |
-| CREATE-01, CREATE-02 | Phase 1 | Pending |
+| OPC-01..07 | Phase 1 | Implemented |
+| WML-01..04 | Phase 1 | Implemented |
+| CREATE-01, CREATE-02 | Phase 1 | Implemented |
 | STYLE-CLONE-01..02 | Phase 2 | Pending |
 | STYLE-RESOLVE-01..03 | Phase 2 | Pending |
 | STYLE-ROUNDTRIP-01..02 | Phase 3 | Pending |

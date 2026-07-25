@@ -23,11 +23,32 @@ type CT_AbstractNum struct {
 }
 
 // CT_Num is a numbering instance (w:num).
+//
+// LvlOverride captures w:num/w:lvlOverride (ISO §17.9.18) — overrides
+// abstract numbering level values for this instance.  Added per RESEARCH
+// Pitfall 4; backward compatible (previously hoarded into Raw).
 type CT_Num struct {
-	XMLName        xml.Name        `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main num"`
-	NumID          *int64          `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main numId,attr,omitempty"`
-	AbstractNumID  *CT_AbstractNumID `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main abstractNumId"`
-	Raw            []xmlutil.RawXML `xml:",any"`
+	XMLName       xml.Name          `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main num"`
+	NumID         *int64            `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main numId,attr,omitempty"`
+	AbstractNumID *CT_AbstractNumID `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main abstractNumId"`
+	LvlOverride   []*CT_LvlOverride `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main lvlOverride"`
+	Raw           []xmlutil.RawXML  `xml:",any"`
+}
+
+// CT_LvlOverride overrides abstract numbering level values for a
+// specific ilvl in a numbering instance (w:lvlOverride, ISO §17.9.18).
+type CT_LvlOverride struct {
+	XMLName       xml.Name          `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main lvlOverride"`
+	ILvl          *int64            `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main ilvl,attr,omitempty"`
+	StartOverride *CT_StartOverride `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main startOverride"`
+	Lvl           *CT_Lvl           `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main lvl,omitempty"`
+}
+
+// CT_StartOverride overrides the starting number for a level
+// (w:startOverride, ISO §17.9.24).
+type CT_StartOverride struct {
+	XMLName xml.Name `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main startOverride"`
+	Val     *int64   `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main val,attr,omitempty"`
 }
 
 // CT_AbstractNumID references an abstract numbering definition.

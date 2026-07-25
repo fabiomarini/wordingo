@@ -476,17 +476,17 @@ Within the ~500 LOC budget (PROJECT.md §11), below the 800 LOC revisit trigger.
 | A5 | Strict-namespace URI normalization approach (token rewrite vs dual tags) | Conformance | Only matters if Strict fixtures exist; blank/create path unaffected |
 | A6 | ECMA-376 §9.1.4.2 ordering details beyond "content-types first, .rels second" | Pattern 4 | Word is order-tolerant; golden tests confirm |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Do D-02 fixtures exist yet?** Plan 01-01 tests depend on them.
+1. (RESOLVED — 01-01 Task 0 fixture checkpoint, graceful skip) **Do D-02 fixtures exist yet?** Plan 01-01 tests depend on them.
    - What we know: D-02/D-03 commit the user to authoring 6–8 files under `testdata/`.
    - What's unclear: whether they're committed at plan-execution time.
    - Recommendation: first task of plan 01-01 is a checkpoint verifying fixture presence; unit tests generate synthetic fixtures meanwhile.
-2. **Theme part modeling depth.**
+2. (RESOLVED — theme kept raw in Phase 1; CT_Theme RawXML shell in 01-02) **Theme part modeling depth.**
    - What we know: Phase 2 resolves theme colors (STYLE-RESOLVE-03).
    - What's unclear: whether Phase 1 should pre-parse `a:clrScheme` (6 elements) to ease Phase 2.
    - Recommendation: keep theme raw in Phase 1 (CREATE-01 only needs a valid blob); Phase 2 introduces DrawingML color types.
-3. **LibreOffice quirk tolerance on save.**
+3. (RESOLVED — pass-through + prefix normalization, no special casing) **LibreOffice quirk tolerance on save.**
    - What we know: LibreOffice emits non-canonical prefixes and extra parts (`Configurations2`, `meta.xml` remnants in converted files).
    - Recommendation: pass-through handles extra parts; prefix normalization handles read — no special casing in Phase 1.
 

@@ -108,12 +108,16 @@ type Package struct {
 func (p *Package) Warnings() []string { return p.warnings }
 
 // MarkModified marks a part's payload as replaced; Save will serialize
-// data instead of raw-copying the original entry.
+// data instead of raw-copying the original entry.  If the part does
+// not yet exist (e.g. during Create assembly), it is created.
 func (p *Package) MarkModified(name string, data []byte) {
-	if part, ok := p.Parts[name]; ok {
-		part.data = data
-		part.modified = true
+	part, ok := p.Parts[name]
+	if !ok {
+		part = &Part{Name: name}
+		p.Parts[name] = part
 	}
+	part.data = data
+	part.modified = true
 }
 
 // MarkDeleted removes a part from the saved output.

@@ -57,12 +57,20 @@ func (enc *Encoder) EncodeToken(t xml.Token) error {
 	switch tok := t.(type) {
 	case xml.StartElement:
 		se := xml.CopyToken(tok).(xml.StartElement)
-		rewrote := enc.rewriteName(&se.Name)
-		if rewrote {
-			// Strip the default xmlns declaration — we're using
-			// canonical prefix form now.
-			se.Attr = stripDefaultXMLNS(se.Attr)
+
+		// Rewrite element name (Space→prefix:local).
+		enc.rewriteName(&se.Name)
+
+		// Rewrite namespace-qualified attribute names.
+		for i := range se.Attr {
+			enc.rewriteName(&se.Attr[i].Name)
 		}
+
+		// Strip all xmlns declarations (both xmlns="" and xmlns:prefix="")
+		// from every element.  The root element gets canonical
+		// declarations from addNSDecls; inner elements inherit.
+		se.Attr = stripAllXMLNS(se.Attr)
+
 		if !enc.rootSeen {
 			enc.rootSeen = true
 			enc.addNSDecls(&se)
@@ -145,19 +153,30 @@ func (enc *Encoder) rewriteName(n *xml.Name) bool {
 	return false
 }
 
-// stripDefaultXMLNS removes the default namespace declaration (an
-// attribute with Local == "xmlns") from attrs.  After namespace-to-
-// prefix rewriting the default xmlns is redundant because the
-// prefix:x form carries the same information.
-func stripDefaultXMLNS(attrs []xml.Attr) []xml.Attr {
+// stripAllXMLNS removes all xmlns declarations from attrs — both
+// plain xmlns="…" (Local=="xmlns", Space=="") and prefixed
+// xmlns:pfx="…" (Space=="xmlns", Local=="pfx").
+// After namespace-to-prefix rewriting these are redundant: canonical
+// prefix:local form carries the same information, and only the root
+// element gets synthesized xmlns:* attributes from addNSDecls.
+func stripAllXMLNS(attrs []xml.Attr) []xml.Attr {
 	out := make([]xml.Attr, 0, len(attrs))
 	for _, a := range attrs {
-		if a.Name.Space == "" && a.Name.Local == "xmlns" {
-			continue
+		if a.Name.Local == "xmlns" && a.Name.Space == "" {
+			continue // xmlns="…"
+		}
+		if a.Name.Space == "xmlns" {
+			continue // xmlns:pfx="…"
 		}
 		out = append(out, a)
 	}
 	return out
+}
+
+// isTransitional returns true for schemas.openxmlformats.org URIs
+// (the preferred conformance class for output).
+func isTransitional(uri string) bool {
+	return strings.Contains(uri, "schemas.openxmlformats.org")
 }
 
 // addNSDecls appends xmlns:* attributes for every prefix that was
@@ -165,10 +184,11 @@ func stripDefaultXMLNS(attrs []xml.Attr) []xml.Attr {
 func (enc *Encoder) addNSDecls(se *xml.StartElement) {
 	// Collect the reverse mapping: prefix -> canonical URI.
 	// URI duplicates (Transitional + Strict → same prefix) are
-	// resolved to the first Transitional entry.
+	// resolved to the Transitional URI (preferred).
 	prefixURI := make(map[string]string, len(CanonicalPrefixes))
 	for uri, pfx := range CanonicalPrefixes {
-		if _, exists := prefixURI[pfx]; !exists {
+		_, seen := prefixURI[pfx]
+		if !seen || isTransitional(uri) {
 			prefixURI[pfx] = uri
 		}
 	}

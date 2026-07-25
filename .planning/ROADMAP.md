@@ -7,7 +7,7 @@ Six phases, each with a hard gate that proves the phase's thesis before proceedi
 ## Phases
 
 - [ ] **Phase 1: Foundation** — OPC package, WML types, blank document
-- [ ] **Phase 2: Style Engine** — STYLE-CLONE + STYLE-RESOLVE
+- [x] **Phase 2: Style Engine** — STYLE-CLONE + STYLE-RESOLVE (completed 2026-07-25)
 - [ ] **Phase 3: Document Model** — open/read/save, STYLE-ROUNDTRIP, FromTemplate
 - [ ] **Phase 4: Content API** — paragraphs, runs, formatting, named styles
 - [ ] **Phase 5: Rich Content** — tables, images, headers/footers, lists, hyperlinks, page setup
@@ -57,19 +57,19 @@ Plans:
   3. Theme colors and numbering definitions resolve; circular basedOn detected without infinite recursion
   4. Test corpus: paragraph with "Heading2" (basedOn Heading1 basedOn Normal) resolves identical effective properties to Word's own rendering
 
-**Plans**: 2/4 plans executed
+**Plans**: 4/4 plans complete
 
 Plans:
 
 - [x] 02-01-PLAN.md — Style resolver — recursive basedOn merger, docDefaults, latentStyles, cycle detection
 - [x] 02-02-PLAN.md — Theme color + numbering resolution; font table handling
 - [x] 02-03-PLAN.md — Dependency graph cloner (byte pass-through of 5 style parts; STYLE-CLONE-01)
-- [ ] 02-04-PLAN.md — Corpus validation — resolver/theme/numbering effective-props validation over cloned packages; Heading2 chain canonical case (STYLE-CLONE-02)
+- [x] 02-04-PLAN.md — Corpus validation — resolver/theme/numbering effective-props validation over cloned packages; Heading2 chain canonical case (STYLE-CLONE-02)
 
 **Wave 1** *(parallel — no cross-deps)*
 
 - [x] 02-01: Style resolver — recursive basedOn merger, docDefaults, latentStyles, cycle detection
-- [ ] 02-03: Dependency graph cloner — byte pass-through of 5 style parts via opc.MarkModified
+- [x] 02-03: Dependency graph cloner — byte pass-through of 5 style parts via opc.MarkModified
 
 **Wave 2** *(blocked on Wave 1 — 02-01 resolver must exist)*
 
@@ -162,7 +162,7 @@ Plans:
 | Phase | Plans Complete | Status | Gate |
 |-------|----------------|--------|------|
 | 1. Foundation | 3/3 | ✅ Complete | Blank .docx opens in Word without repair |
-| 2. Style Engine | 2/4 | In Progress|  |
+| 2. Style Engine | 4/4 | Complete   | 2026-07-25 |
 | 3. Document Model | 0/2 | Not started | Zero unintended diffs on round-trip |
 | 4. Content API | 0/2 | Not started | Formatted text doc programmatically |
 | 5. Rich Content | 0/3 | Not started | Complete business document |

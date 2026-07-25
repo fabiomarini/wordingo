@@ -28,7 +28,7 @@
 Three distinct operations, explicitly separated. Do not conflate.
 
 - [x] **STYLE-CLONE-01**: Copy template style dependency graph into target document — styles.xml + numbering.xml + fontTable.xml + theme.xml + settings.xml, with relationships and content types updated
-- [ ] **STYLE-CLONE-02**: Named styles from template applicable to new content by name
+- [x] **STYLE-CLONE-02**: Named styles from template applicable to new content by name
 - [ ] **STYLE-RESOLVE-01**: Resolve effective paragraph properties through the full chain: docDefaults → latentStyles → basedOn chain → direct formatting
 - [ ] **STYLE-RESOLVE-02**: Resolve effective run properties through the full chain, including run styles
 - [ ] **STYLE-RESOLVE-03**: Resolve theme colors and numbering definitions; detect circular basedOn references

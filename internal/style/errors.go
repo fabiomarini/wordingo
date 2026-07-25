@@ -14,3 +14,8 @@ var ErrStylesParseFailed = errors.New("style: styles.xml parse failed")
 // CloneStyles errors wrap this via
 // fmt.Errorf("style: clone %s: %w", partName, ErrCloneTargetNotEmpty).
 var ErrCloneTargetNotEmpty = errors.New("style: clone target not empty")
+
+// ErrThemeParseFailed is returned when theme1.xml cannot be parsed.
+// Callers match with errors.Is; all parse errors wrap this via
+// fmt.Errorf("style: decode theme1.xml: %v: %w", err, ErrThemeParseFailed).
+var ErrThemeParseFailed = errors.New("style: theme1.xml parse failed")

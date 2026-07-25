@@ -287,11 +287,11 @@ func TestResolveColor_EmptyThemeColor(t *testing.T) {
 }
 
 func TestResolveColor_TintMath(t *testing.T) {
-	// accent1=0x156082 (R=0x15=21, G=0x60=96, B=0x82=130)
-	// ThemeTint="80" → 128/255 ≈ 0.502
-	// R = 21 + (255-21)*0.502 = 21 + 234*0.502 = 21 + 117.5 = 138.5 → 139 (0x8B)
-	// G = 96 + (255-96)*0.502 = 96 + 159*0.502 = 96 + 79.8 = 175.8 → 176 (0xB0)
-	// B = 130 + (255-130)*0.502 = 130 + 125*0.502 = 130 + 62.8 = 192.8 → 193 (0xC1)
+	// accent1=0x156082 (R=O15=21, G=O60=96, B=O82=130)
+	// ThemeTint="80" → 128/255 ≈ 0.501961
+	// R = 21 + (255-21)*(128/255) = 21 + 117.46 = 138.46 → 138 (0x8A)
+	// G = 96 + (255-96)*(128/255) = 96 + 79.81 = 175.81 → 176 (0xB0)
+	// B = 130 + (255-130)*(128/255) = 130 + 62.75 = 192.75 → 193 (0xC1)
 	themeXML := buildThemeXML(t, `<a:accent1><a:srgbClr val="156082"/></a:accent1>`)
 	pkg := buildPkgWithTheme(t, themeXML)
 	var warns []string
@@ -300,7 +300,7 @@ func TestResolveColor_TintMath(t *testing.T) {
 	c := &wml.CT_Color{ThemeColor: strPtr("accent1"), ThemeTint: strPtr("80")}
 	result := tc.ResolveColor(c)
 
-	expected := "8BB0C1"
+	expected := "8AB0C1"
 	if result.Val == nil || *result.Val != expected {
 		t.Errorf("Val = %v, want %s (tint 0x80 applied)", result.Val, expected)
 	}
@@ -311,10 +311,10 @@ func TestResolveColor_TintMath(t *testing.T) {
 
 func TestResolveColor_ShadeMath(t *testing.T) {
 	// accent1=0x156082 (R=21, G=96, B=130)
-	// ThemeShade="80" → 128/255 ≈ 0.502
-	// R = 21*0.502 = 10.5 → 11 (0x0B)
-	// G = 96*0.502 = 48.2 → 48 (0x30)
-	// B = 130*0.502 = 65.3 → 65 (0x41)
+	// ThemeShade="80" → 128/255
+	// R = 21*(128/255) = 10.54 → 11 (0x0B)
+	// G = 96*(128/255) = 48.19 → 48 (0x30)
+	// B = 130*(128/255) = 65.25 → 65 (0x41)
 	themeXML := buildThemeXML(t, `<a:accent1><a:srgbClr val="156082"/></a:accent1>`)
 	pkg := buildPkgWithTheme(t, themeXML)
 	var warns []string
@@ -334,10 +334,8 @@ func TestResolveColor_ShadeMath(t *testing.T) {
 
 func TestResolveColor_TintShadeOrder(t *testing.T) {
 	// accent1=0x156082 (R=21, G=96, B=130)
-	// ThemeShade="80" first: R=10.5→11 (0x0B), G=48 (0x30), B=65 (0x41) → 0B3041
-	// Then ThemeTint="80": R=11+(255-11)*0.502=11+122.5=133.5→134 (0x86)
-	//                        G=48+(255-48)*0.502=48+103.9=151.9→152 (0x98)
-	//                        B=65+(255-65)*0.502=65+95.4=160.4→160 (0xA0)
+	// ThemeShade="80" first: R=11(0x0B), G=48(0x30), B=65(0x41) → 0B3041
+	// Then ThemeTint="80": R=133(0x85), G=152(0x98), B=160(0xA0) → 8598A0
 	themeXML := buildThemeXML(t, `<a:accent1><a:srgbClr val="156082"/></a:accent1>`)
 	pkg := buildPkgWithTheme(t, themeXML)
 	var warns []string
@@ -346,7 +344,7 @@ func TestResolveColor_TintShadeOrder(t *testing.T) {
 	c := &wml.CT_Color{ThemeColor: strPtr("accent1"), ThemeShade: strPtr("80"), ThemeTint: strPtr("80")}
 	result := tc.ResolveColor(c)
 
-	expected := "8698A0"
+	expected := "8598A0"
 	if result.Val == nil || *result.Val != expected {
 		t.Errorf("Val = %v, want %s (shade FIRST then tint — Pitfall 5)", result.Val, expected)
 	}

@@ -142,7 +142,4 @@ func buildDocumentXML() []byte {
 	return buf.Bytes()
 }
 
-// Ensure addPart is consistently named — used below.
-func init() {
-	_ = fmt.Sprintf // keep fmt import alive for panic formatting
-}
+

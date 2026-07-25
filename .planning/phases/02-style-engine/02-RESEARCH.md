@@ -770,21 +770,17 @@ testdata/
 | A7 | Heading2 canonical case expected values (sz=28, accent1 theme color, etc.) | Fixture Design | Fixture-author (user per Phase 1 D-02) captures exact values from a real Word fixture; researcher's numbers are illustrative. |
 | A8 | Theme1.xml element names are `dk1/lt1/dk2/lt2/accent1-6/hlink/folHlink` (verified against `defaults/theme1.xml`) but enum values are `dark1/light1/dark2/light2/accent1-6/hyperlink/followedHyperlink` | Pattern 3 | Verified for element names; enum values from ISO §17.18.95 ST_ThemeColor — CITED, not re-pulled from spec text this session. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Should `link` be consulted for run-props in v1?**
-   - What we know: ISO §17.7.4.6 pairs paragraph↔character styles; Word consults the linked character style when resolving a paragraph style's rPr.
-   - What's unclear: whether the merge order is (para-style rPr → linked char-style rPr → basedOn chain rPr) or (linked char-style rPr → para-style rPr → basedOn chain rPr).
-   - Recommendation: implement link consultation as a layer between para-style-rPr and basedOn-chain-rPr. If tests reveal ambiguity, drop link for v1 and document — bounded scope, no Phase 2 blocker.
+1. **Should `link` be consulted for run-props in v1?** — RESOLVED: deferred. 02-01/02-02 phase_boundary excludes link consultation; RESEARCH Pitfall 1 confirms `next` is editor-hint (never walked); link is optional for rPr and deferred behind v1 validation per CONTEXT.md `<deferred>`. If tests reveal ambiguity, drop link for v1 and document — bounded scope, no Phase 2 blocker.
+   - ISO §17.7.4.6 pairs paragraph↔character styles; Word consults the linked character style when resolving a paragraph style's rPr.
+   - Merge order unclear: (para-style rPr → linked char-style rPr → basedOn chain rPr) vs (linked char-style rPr → para-style rPr → basedOn chain rPr).
 
-2. **Should missing numId preserve the broken `CT_NumPr` or drop it?**
-   - What we know: D-07 says "substitute a sensible default (no numPr)." But the caller (Phase 4 content API) may want to know the numPr was broken.
-   - Recommendation: preserve the numPr as-is in the returned clone, emit a warning. Caller decides whether to render. Document this in resolver.go.
+2. **Should missing numId preserve the broken `CT_NumPr` or drop it?** — RESOLVED: preserve. 02-02 Task 3 preserves the numPr as-is in the returned clone and emits a warning (D-07). Caller decides whether to render. Documented in resolver.go.
+   - D-07 says "substitute a sensible default (no numPr)" for the resolver's own effective-props view, but the caller (Phase 4 content API) may want to know the numPr was broken — preservation + warning satisfies both.
 
-3. **Does `opc.Part.modified` get exposed cleanly to `internal/style`?**
-   - What we know: `Part.modified` is set by `MarkModified` (Phase 1, verified).
-   - What's unclear: whether the field is exported or has an accessor.
-   - Recommendation: plan 02-01 task verifies; if unexported, add `Part.IsModified() bool` one-liner.
+3. **Does `opc.Part.modified` get exposed cleanly to `internal/style`?** — RESOLVED: accessor added. 02-01 Task 1 verifies `Part.modified` (unexported, `internal/opc/package.go:45`) and adds `Part.IsModified() bool` one-liner for cache invalidation (D-03).
+   - `Part.modified` is set by `MarkModified` (Phase 1, verified).
 
 ## Environment Availability
 

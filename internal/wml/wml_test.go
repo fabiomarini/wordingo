@@ -1,0 +1,286 @@
+package wml_test
+
+import (
+	"bytes"
+	"encoding/xml"
+	"strings"
+	"testing"
+
+	"github.com/fabiomarini/wordingo/internal/wml"
+	"github.com/fabiomarini/wordingo/internal/xmlutil"
+)
+
+// ---- Type count check ----
+
+func TestExportedTypeCount(t *testing.T) {
+	// Simple reflection-based count: the test itself references types
+	// in the package, so if it compiles the types exist.
+	// Count via go doc check is done in acceptance criteria.
+	// Here we just verify at least a few core types compile.
+	var _ *wml.CT_Document
+	var _ *wml.CT_P
+	var _ *wml.CT_R
+	var _ *wml.CT_Text
+	var _ *wml.CT_Body
+	var _ *wml.CT_Styles
+	var _ *wml.CT_Numbering
+	var _ *wml.CT_Tbl
+	var _ *wml.CT_SectPr
+	var _ *wml.CT_Settings
+	t.Log("Core types compile")
+}
+
+// ---- Round-trip tests ----
+
+func TestRoundTrip_Document(t *testing.T) {
+	input := `<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p/></w:body></w:document>`
+
+	var doc wml.CT_Document
+	if err := xml.Unmarshal([]byte(input), &doc); err != nil {
+		t.Fatalf("Unmarshal: %v", err)
+	}
+	if doc.Body == nil {
+		t.Fatal("Body is nil after unmarshal")
+	}
+	if len(doc.Body.P) == 0 {
+		t.Fatal("Body.P is empty")
+	}
+
+	// Marshal through xmlutil.Encoder
+	var buf bytes.Buffer
+	enc := xmlutil.NewEncoder(&buf)
+	if err := enc.Encode(&doc); err != nil {
+		t.Fatalf("Encode: %v", err)
+	}
+	enc.Flush()
+
+	outStr := buf.String()
+	if !strings.Contains(outStr, "<w:document") {
+		t.Errorf("output missing w:document, got:\n%s", outStr)
+	}
+	if !strings.Contains(outStr, "<w:body") {
+		t.Errorf("output missing w:body, got:\n%s", outStr)
+	}
+	if !strings.Contains(outStr, "<w:p/>") && !strings.Contains(outStr, "<w:p></w:p>") {
+		t.Errorf("output missing w:p, got:\n%s", outStr)
+	}
+}
+
+func TestRoundTrip_Paragraph(t *testing.T) {
+	input := `<w:p xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:r><w:t xml:space="preserve">Hello World</w:t></w:r></w:p>`
+
+	var p wml.CT_P
+	if err := xml.Unmarshal([]byte(input), &p); err != nil {
+		t.Fatalf("Unmarshal: %v", err)
+	}
+	if len(p.R) == 0 || p.R[0].T == nil {
+		t.Fatal("expected run with text")
+	}
+
+	// Marshal and verify round-trip through xmlutil.Encoder
+	var buf bytes.Buffer
+	enc := xmlutil.NewEncoder(&buf)
+	if err := enc.Encode(&p); err != nil {
+		t.Fatalf("Encode: %v", err)
+	}
+	enc.Flush()
+
+	outStr := buf.String()
+	if !strings.Contains(outStr, "<w:p") {
+		t.Errorf("output missing w:p, got:\n%s", outStr)
+	}
+	if !strings.Contains(outStr, "<w:r") {
+		t.Errorf("output missing w:r, got:\n%s", outStr)
+	}
+	if !strings.Contains(outStr, "<w:t") {
+		t.Errorf("output missing w:t, got:\n%s", outStr)
+	}
+	if !strings.Contains(outStr, "Hello World") {
+		t.Errorf("output missing text, got:\n%s", outStr)
+	}
+}
+
+func TestWhitespace(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		text  string
+		hasSpace bool
+	}{
+		{"clean text", `<w:t xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">hello</w:t>`, "hello", false},
+		{"leading space", `<w:t xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xml:space="preserve">  hello</w:t>`, "  hello", true},
+		{"double space", `<w:t xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xml:space="preserve">hello  world</w:t>`, "hello  world", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var txt wml.CT_Text
+			if err := xml.Unmarshal([]byte(tt.input), &txt); err != nil {
+				t.Fatalf("Unmarshal: %v", err)
+			}
+			if txt.Value != tt.text {
+				t.Errorf("Value = %q, want %q", txt.Value, tt.text)
+			}
+
+			// Marshal through xmlutil.Encoder and check xml:space
+			var buf bytes.Buffer
+			enc := xmlutil.NewEncoder(&buf)
+			if err := enc.Encode(&txt); err != nil {
+				t.Fatalf("Encode: %v", err)
+			}
+			enc.Flush()
+
+			outStr := buf.String()
+			if tt.hasSpace && !strings.Contains(outStr, `xml:space="preserve"`) {
+				t.Errorf("expected xml:space=\"preserve\", got:\n%s", outStr)
+			}
+			if !tt.hasSpace && strings.Contains(outStr, `xml:space="preserve"`) {
+				t.Errorf("unexpected xml:space=\"preserve\", got:\n%s", outStr)
+			}
+			// Text should survive round-trip
+			if !strings.Contains(outStr, tt.text) {
+				t.Errorf("text %q not found in output:\n%s", tt.text, outStr)
+			}
+		})
+	}
+}
+
+func TestPrefixAgnostic(t *testing.T) {
+	// Non-canonical prefix resolves to same type via URI
+	input := `<word:p xmlns:word="http://schemas.openxmlformats.org/wordprocessingml/2006/main"/>`
+	var p wml.CT_P
+	if err := xml.Unmarshal([]byte(input), &p); err != nil {
+		t.Fatalf("Unmarshal with word: prefix: %v", err)
+	}
+}
+
+func TestHoard(t *testing.T) {
+	input := `<w:pPr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:pStyle w:val="Heading1"/><w14:paraId xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml" w14:val="12345"/></w:pPr>`
+
+	var ppr wml.CT_PPr
+	if err := xml.Unmarshal([]byte(input), &ppr); err != nil {
+		t.Fatalf("Unmarshal: %v", err)
+	}
+	if ppr.PStyle == nil || ppr.PStyle.Val == nil || *ppr.PStyle.Val != "Heading1" {
+		t.Error("PStyle not properly unmarshaled")
+	}
+	// Unknown child (w14:paraId) should be hoarded in Raw
+	if len(ppr.Raw) == 0 {
+		t.Error("Raw hoard is empty - unknown child was lost")
+	}
+
+	// Marshal and verify unknown child survives
+	var buf bytes.Buffer
+	enc := xmlutil.NewEncoder(&buf)
+	if err := enc.Encode(&ppr); err != nil {
+		t.Fatalf("Encode: %v", err)
+	}
+	enc.Flush()
+
+	outStr := buf.String()
+	if !strings.Contains(outStr, "paraId") {
+		t.Errorf("hoarded child 'paraId' lost in round-trip, got:\n%s", outStr)
+	}
+	if !strings.Contains(outStr, "12345") {
+		t.Errorf("hoarded attr '12345' lost in round-trip, got:\n%s", outStr)
+	}
+}
+
+func TestRoundTrip_Style(t *testing.T) {
+	input := `<w:style xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" w:type="paragraph" w:styleId="Heading1">
+<w:name w:val="heading 1"/>
+<w:basedOn w:val="Normal"/>
+<w:next w:val="Normal"/>
+<w:link w:val="Heading1Char"/>
+<w:qFormat/>
+</w:style>`
+
+	var s wml.CT_Style
+	if err := xml.Unmarshal([]byte(input), &s); err != nil {
+		t.Fatalf("Unmarshal: %v", err)
+	}
+	if s.StyleID == nil || *s.StyleID != "Heading1" {
+		t.Errorf("StyleID = %v, want Heading1", s.StyleID)
+	}
+	if s.Name == nil || s.Name.Val == nil || *s.Name.Val != "heading 1" {
+		t.Errorf("Name.Val = %v, want 'heading 1'", s.Name.Val)
+	}
+	if s.BasedOn == nil || s.BasedOn.Val == nil || *s.BasedOn.Val != "Normal" {
+		t.Errorf("BasedOn.Val = %v, want Normal", s.BasedOn.Val)
+	}
+
+	var buf bytes.Buffer
+	enc := xmlutil.NewEncoder(&buf)
+	if err := enc.Encode(&s); err != nil {
+		t.Fatalf("Encode: %v", err)
+	}
+	enc.Flush()
+
+	outStr := buf.String()
+	if !strings.Contains(outStr, "Heading1") {
+		t.Errorf("styleId lost, got:\n%s", outStr)
+	}
+	if !strings.Contains(outStr, `heading 1`) {
+		t.Errorf("style name lost, got:\n%s", outStr)
+	}
+}
+
+func TestRoundTrip_Numbering(t *testing.T) {
+	input := `<w:numbering xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+<w:abstractNum w:abstractNumId="0">
+<w:lvl w:ilvl="0"><w:numFmt w:val="decimal"/><w:lvlText w:val="%1."/><w:start w:val="1"/></w:lvl>
+</w:abstractNum>
+<w:num w:numId="1"><w:abstractNumId w:val="0"/></w:num>
+</w:numbering>`
+
+	var n wml.CT_Numbering
+	if err := xml.Unmarshal([]byte(input), &n); err != nil {
+		t.Fatalf("Unmarshal: %v", err)
+	}
+
+	var buf bytes.Buffer
+	enc := xmlutil.NewEncoder(&buf)
+	if err := enc.Encode(&n); err != nil {
+		t.Fatalf("Encode: %v", err)
+	}
+	enc.Flush()
+
+	outStr := buf.String()
+	if !strings.Contains(outStr, `decimal`) {
+		t.Errorf("numFmt lost, got:\n%s", outStr)
+	}
+	if !strings.Contains(outStr, `%1.`) {
+		t.Errorf("lvlText lost, got:\n%s", outStr)
+	}
+}
+
+func TestRoundTrip_Table(t *testing.T) {
+	input := `<w:tbl xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+<w:tblPr><w:tblStyle w:val="TableGrid"/><w:tblW w:w="5000" w:type="pct"/></w:tblPr>
+<w:tblGrid><w:gridCol w:w="2500"/><w:gridCol w:w="2500"/></w:tblGrid>
+<w:tr><w:tc><w:p/></w:tc><w:tc><w:p/></w:tc></w:tr>
+</w:tbl>`
+
+	var tbl wml.CT_Tbl
+	if err := xml.Unmarshal([]byte(input), &tbl); err != nil {
+		t.Fatalf("Unmarshal: %v", err)
+	}
+
+	var buf bytes.Buffer
+	enc := xmlutil.NewEncoder(&buf)
+	if err := enc.Encode(&tbl); err != nil {
+		t.Fatalf("Encode: %v", err)
+	}
+	enc.Flush()
+
+	outStr := buf.String()
+	if !strings.Contains(outStr, `TableGrid`) {
+		t.Errorf("tblStyle lost, got:\n%s", outStr)
+	}
+	if !strings.Contains(outStr, `<w:tr`) {
+		t.Errorf("table row missing, got:\n%s", outStr)
+	}
+	if !strings.Contains(outStr, `<w:tc`) {
+		t.Errorf("table cell missing, got:\n%s", outStr)
+	}
+}

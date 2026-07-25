@@ -12,10 +12,13 @@ import (
 )
 
 func TestCreate(t *testing.T) {
-	doc := Create()
+	doc, err := Create()
+	if err != nil {
+		t.Fatalf("Create() error: %v", err)
+	}
 	var buf bytes.Buffer
-	if err := doc.Save(&buf); err != nil {
-		t.Fatalf("Save() error: %v", err)
+	if _, err := doc.WriteTo(&buf); err != nil {
+		t.Fatalf("WriteTo() error: %v", err)
 	}
 
 	// --- Entry order ---
@@ -126,7 +129,10 @@ func readZipEntry(t *testing.T, zr *zip.Reader, name string) string {
 }
 
 func TestSaveFile(t *testing.T) {
-	doc := Create()
+	doc, err := Create()
+	if err != nil {
+		t.Fatalf("Create() error: %v", err)
+	}
 	path := filepath.Join(t.TempDir(), "savefile.docx")
 	if err := doc.SaveFile(path); err != nil {
 		t.Fatalf("SaveFile: %v", err)
@@ -155,7 +161,10 @@ func TestSaveFile(t *testing.T) {
 }
 
 func TestXEscapeHatch(t *testing.T) {
-	doc := Create()
+	doc, err := Create()
+	if err != nil {
+		t.Fatal(err)
+	}
 	pkg := doc.X()
 	if pkg == nil {
 		t.Fatal("X() returned nil")

@@ -451,22 +451,19 @@ func TestLazyLoading(t *testing.T) {
 
 **If this table is empty:** *(Not empty — see A1)*
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **OpenTemplate sectPr handling**
+1. **OpenTemplate sectPr handling** [RESOLVED]
    - What we know: Source body's sectPr contains header/footer rIds that point to the source relationship graph. CloneStyles creates new rIds, so these go dangling.
-   - What's unclear: Should OpenTemplate strip header/footer refs from sectPr (safe but loses info), or should it keep them and fail on Save (correct but less usable)?
-   - Recommendation: Strip header/footer references from sectPr in OpenTemplate for Phase 3. Phase 5 adds proper header/footer cloning. Document this limitation in function doc comments.
+   - Resolution: Strip header/footer references from sectPr in OpenTemplate for Phase 3 (D-04). Implemented via fresh defaultSectPr() in OpenTemplateReader (03-02-PLAN.md Task 1). Phase 5 adds proper header/footer cloning. Document this limitation in function doc comments.
 
-2. **OpenTemplate naming**
+2. **OpenTemplate naming** [RESOLVED]
    - What we know: The PRD calls it "pre-populated template support" — D-04 names it OpenTemplate.
-   - What's unclear: Whether OpenTemplate is the final name or if users prefer "OpenPrePopulated"/"EditTemplate"/etc.
-   - Recommendation: Confirm with user in plan phase. D-04's discretion area allows naming flexibility.
+   - Resolution: OpenTemplate and OpenTemplateReader are the final names per D-04 after user confirmation during /gsd-discuss-phase. No rename needed.
 
-3. **Raw body bytes vs parsed CT_Document only**
+3. **Raw body bytes vs parsed CT_Document only** [RESOLVED]
    - What we know: Eager parse of document.xml on Open produces `*wml.CT_Document`. Re-encoding body changes byte content.
-   - What's unclear: Should we also store raw body bytes for a "before/after" diff capability, or parse-only to CT_Document?
-   - Recommendation: Parse to `CT_Document` only. Raw bytes are on the part's `file` field (unmodified before MarkModified). No need for a separate store. The round-trip diff test compares original ZIP against re-saved ZIP — body is expected to differ (re-encoded), style parts are expected to match.
+   - Resolution: Parse to `CT_Document` only (D-03). Raw bytes are on the part's `file` field (unmodified before MarkModified). No separate store needed. Round-trip diff compares original ZIP against re-saved ZIP — body expected to differ (re-encoded), style parts expected to match.
 
 ## Environment Availability
 

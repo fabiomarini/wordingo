@@ -93,9 +93,12 @@ Plans:
 
 **Plans**: 2/2 plans
 
-Wave 1 *(parallel — no cross-deps, zero file overlap)*
+**Wave 1**
 
 - [ ] 03-01: Document open/read/save — lazy loading (D-03), Paragraphs() (D-02), WriteTo/Save/Close (D-07), per-part round-trip diff (D-05)
+
+**Wave 2** *(depends on 03-01 — needs parseDocument helper and Create() (*Document, error) refactor)*
+
 - [ ] 03-02: FromTemplate + OpenTemplate with CloneStyles (D-04, CREATE-03, CREATE-04)
 
 ### Phase 4: Content API

@@ -57,13 +57,27 @@ Plans:
   3. Theme colors and numbering definitions resolve; circular basedOn detected without infinite recursion
   4. Test corpus: paragraph with "Heading2" (basedOn Heading1 basedOn Normal) resolves identical effective properties to Word's own rendering
 
-**Plans**: 3 plans
+**Plans**: 4 plans
 
 Plans:
 
+- [ ] 02-01-PLAN.md — Style resolver — recursive basedOn merger, docDefaults, latentStyles, cycle detection
+- [ ] 02-02-PLAN.md — Theme color + numbering resolution; font table handling
+- [ ] 02-03-PLAN.md — Dependency graph cloner (byte pass-through of 5 style parts; STYLE-CLONE-01)
+- [ ] 02-04-PLAN.md — Corpus validation — resolver/theme/numbering effective-props validation over cloned packages; Heading2 chain canonical case (STYLE-CLONE-02)
+
+**Wave 1** *(parallel — no cross-deps)*
+
 - [ ] 02-01: Style resolver — recursive basedOn merger, docDefaults, latentStyles, cycle detection
-- [ ] 02-02: Theme color + numbering resolution; font table handling
-- [ ] 02-03: Dependency graph cloner + real-template test corpus validation
+- [ ] 02-03: Dependency graph cloner — byte pass-through of 5 style parts via opc.MarkModified
+
+**Wave 2** *(blocked on Wave 1 — 02-01 resolver must exist)*
+
+- [ ] 02-02: Theme color concretization + numbering level resolution wired into resolver
+
+**Wave 3** *(blocked on Waves 1+2 — corpus validation exercises the full stack)*
+
+- [ ] 02-04: Corpus validation — cloner + resolver + theme/numbering end-to-end over cloned packages; Heading2 chain canonical case (ROADMAP success criterion #4)
 
 ### Phase 3: Document Model
 
@@ -148,10 +162,10 @@ Plans:
 | Phase | Plans Complete | Status | Gate |
 |-------|----------------|--------|------|
 | 1. Foundation | 2/3 | In Progress|  |
-| 2. Style Engine | 0/3 | Not started | Template styles render correctly |
+| 2. Style Engine | 0/4 | Not started | Template styles render correctly |
 | 3. Document Model | 0/2 | Not started | Zero unintended diffs on round-trip |
 | 4. Content API | 0/2 | Not started | Formatted text doc programmatically |
 | 5. Rich Content | 0/3 | Not started | Complete business document |
 | 6. Merge & Edit | 0/2 | Not started | UC1–UC4 green, v1.0 tagged |
 
-Total: 15 plans, 33 v1 requirements, 0 complete.
+Total: 16 plans, 33 v1 requirements, 0 complete.

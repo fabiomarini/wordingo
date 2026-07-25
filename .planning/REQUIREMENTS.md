@@ -29,9 +29,9 @@ Three distinct operations, explicitly separated. Do not conflate.
 
 - [x] **STYLE-CLONE-01**: Copy template style dependency graph into target document — styles.xml + numbering.xml + fontTable.xml + theme.xml + settings.xml, with relationships and content types updated
 - [x] **STYLE-CLONE-02**: Named styles from template applicable to new content by name
-- [ ] **STYLE-RESOLVE-01**: Resolve effective paragraph properties through the full chain: docDefaults → latentStyles → basedOn chain → direct formatting
-- [ ] **STYLE-RESOLVE-02**: Resolve effective run properties through the full chain, including run styles
-- [ ] **STYLE-RESOLVE-03**: Resolve theme colors and numbering definitions; detect circular basedOn references
+- [x] **STYLE-RESOLVE-01**: Resolve effective paragraph properties through the full chain: docDefaults → latentStyles → basedOn chain → direct formatting
+- [x] **STYLE-RESOLVE-02**: Resolve effective run properties through the full chain, including run styles
+- [x] **STYLE-RESOLVE-03**: Resolve theme colors and numbering definitions; detect circular basedOn references
 - [ ] **STYLE-ROUNDTRIP-01**: Editing a document never rewrites style parts unless user explicitly modifies styles
 - [ ] **STYLE-ROUNDTRIP-02**: Unmodified content formatting is byte-identical after edit + save
 
@@ -102,8 +102,8 @@ Deferred behind v1 validation.
 | OPC-01..07 | Phase 1 | Implemented |
 | WML-01..04 | Phase 1 | Implemented |
 | CREATE-01, CREATE-02 | Phase 1 | Implemented |
-| STYLE-CLONE-01..02 | Phase 2 | Pending |
-| STYLE-RESOLVE-01..03 | Phase 2 | Pending |
+| STYLE-CLONE-01..02 | Phase 2 | Implemented |
+| STYLE-RESOLVE-01..03 | Phase 2 | Implemented |
 | STYLE-ROUNDTRIP-01..02 | Phase 3 | Pending |
 | CREATE-03, CREATE-04 | Phase 3 | Pending |
 | API-01..03 | Phase 4 | Pending |

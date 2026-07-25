@@ -77,7 +77,7 @@ Plans:
 
 **Wave 3** *(blocked on Waves 1+2 — corpus validation exercises the full stack)*
 
-- [ ] 02-04: Corpus validation — cloner + resolver + theme/numbering end-to-end over cloned packages; Heading2 chain canonical case (ROADMAP success criterion #4)
+- [x] 02-04: Corpus validation — cloner + resolver + theme/numbering end-to-end over cloned packages; Heading2 chain canonical case (ROADMAP success criterion #4)
 
 ### Phase 3: Document Model
 
@@ -162,10 +162,10 @@ Plans:
 | Phase | Plans Complete | Status | Gate |
 |-------|----------------|--------|------|
 | 1. Foundation | 3/3 | ✅ Complete | Blank .docx opens in Word without repair |
-| 2. Style Engine | 4/4 | Complete   | 2026-07-25 |
+| 2. Style Engine | 4/4 | ✅ Complete | 2026-07-25 |
 | 3. Document Model | 0/2 | Not started | Zero unintended diffs on round-trip |
 | 4. Content API | 0/2 | Not started | Formatted text doc programmatically |
 | 5. Rich Content | 0/3 | Not started | Complete business document |
 | 6. Merge & Edit | 0/2 | Not started | UC1–UC4 green, v1.0 tagged |
 
-Total: 16 plans, 33 v1 requirements, 3 complete.
+Total: 16 plans, 7 complete, 33 v1 requirements.

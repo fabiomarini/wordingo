@@ -462,3 +462,124 @@ func TestSave(t *testing.T) {
 		}
 	})
 }
+
+// --- Real-producer fixture tests (OPC-03, OPC-04, QUAL-02) ---------
+
+func realFixtures(t *testing.T) []string {
+	t.Helper()
+	if !HasFixtures(t) {
+		return nil
+	}
+	pattern := filepath.Join("..", "..", "testdata", "word", "*.docx")
+	matches, err := filepath.Glob(pattern)
+	if err != nil {
+		t.Fatalf("glob %s: %v", pattern, err)
+	}
+	if len(matches) == 0 {
+		t.Skip("no .docx fixtures matched")
+	}
+	return matches
+}
+
+func TestOpenRealFixtures(t *testing.T) {
+	for _, path := range realFixtures(t) {
+		path := path
+		t.Run(filepath.Base(path), func(t *testing.T) {
+			data, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatalf("read %s: %v", path, err)
+			}
+			pkg, err := Open(bytes.NewReader(data), int64(len(data)))
+			if err != nil {
+				t.Fatalf("Open: %v", err)
+			}
+			if pkg.Conformance != Transitional {
+				t.Errorf("Conformance = %v, want Transitional", pkg.Conformance)
+			}
+			for _, must := range []string{
+				"[Content_Types].xml",
+				"_rels/.rels",
+				"word/document.xml",
+			} {
+				if _, ok := pkg.Parts[must]; !ok {
+					t.Errorf("required part %s missing", must)
+				}
+			}
+			for _, w := range pkg.Warnings() {
+				if strings.Contains(w, "error") {
+					t.Errorf("error-level warning: %s", w)
+				}
+			}
+		})
+	}
+}
+
+func TestRoundTripRealFixtures(t *testing.T) {
+	for _, path := range realFixtures(t) {
+		path := path
+		t.Run(filepath.Base(path), func(t *testing.T) {
+			data, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatalf("read %s: %v", path, err)
+			}
+			pkg, err := Open(bytes.NewReader(data), int64(len(data)))
+			if err != nil {
+				t.Fatalf("Open: %v", err)
+			}
+			var out bytes.Buffer
+			if err := pkg.Save(&out); err != nil {
+				t.Fatalf("Save: %v", err)
+			}
+			DiffParts(t, data, out.Bytes())
+		})
+	}
+}
+
+func TestNoPanicCorruptInput(t *testing.T) {
+	corrupt := []struct {
+		name  string
+		build func(t *testing.T) []byte
+	}{
+		{"empty", func(t *testing.T) []byte { return nil }},
+		{"garbage", func(t *testing.T) []byte {
+			b := make([]byte, 256)
+			for i := range b {
+				b[i] = byte(i)
+			}
+			return b
+		}},
+		{"zip without content types", func(t *testing.T) []byte {
+			var buf bytes.Buffer
+			zw := zip.NewWriter(&buf)
+			w, err := zw.Create("word/document.xml")
+			if err != nil {
+				t.Fatal(err)
+			}
+			w.Write([]byte("<x/>"))
+			if err := zw.Close(); err != nil {
+				t.Fatal(err)
+			}
+			return buf.Bytes()
+		}},
+		{"truncated zip", func(t *testing.T) []byte {
+			full := buildSyntheticZip(t)
+			return full[:len(full)/2]
+		}},
+	}
+
+	for _, c := range corrupt {
+		c := c
+		t.Run(c.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					t.Fatalf("Open panicked on %s: %v", c.name, r)
+				}
+			}()
+			data := c.build(t)
+			_, err := Open(bytes.NewReader(data), int64(len(data)))
+			if err == nil {
+				t.Errorf("Open returned nil error for corrupt input %q", c.name)
+			}
+		})
+	}
+}

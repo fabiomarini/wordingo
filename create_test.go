@@ -3,6 +3,8 @@ package wordingo
 import (
 	"archive/zip"
 	"bytes"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -121,4 +123,50 @@ func readZipEntry(t *testing.T, zr *zip.Reader, name string) string {
 	}
 	t.Fatalf("part %s not found", name)
 	return ""
+}
+
+func TestSaveFile(t *testing.T) {
+	doc := Create()
+	path := filepath.Join(t.TempDir(), "savefile.docx")
+	if err := doc.SaveFile(path); err != nil {
+		t.Fatalf("SaveFile: %v", err)
+	}
+
+	f, err := os.Open(path)
+	if err != nil {
+		t.Fatalf("os.Open: %v", err)
+	}
+	defer f.Close()
+
+	stat, err := f.Stat()
+	if err != nil {
+		t.Fatalf("Stat: %v", err)
+	}
+	pkg, err := opc.Open(f, stat.Size())
+	if err != nil {
+		t.Fatalf("opc.Open: %v", err)
+	}
+	if len(pkg.Warnings()) != 0 {
+		t.Errorf("unexpected warnings: %v", pkg.Warnings())
+	}
+	if pkg.Conformance != opc.Transitional {
+		t.Errorf("Conformance = %v, want Transitional", pkg.Conformance)
+	}
+}
+
+func TestXEscapeHatch(t *testing.T) {
+	doc := Create()
+	pkg := doc.X()
+	if pkg == nil {
+		t.Fatal("X() returned nil")
+	}
+	if pkg.ContentTypes == nil {
+		t.Error("pkg.ContentTypes is nil")
+	}
+	if len(pkg.Parts) == 0 {
+		t.Error("pkg.Parts is empty")
+	}
+	if pkg.Conformance != opc.Transitional {
+		t.Errorf("Conformance = %v, want Transitional", pkg.Conformance)
+	}
 }

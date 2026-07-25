@@ -3,6 +3,9 @@ package wml_test
 import (
 	"bytes"
 	"encoding/xml"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"strings"
 	"testing"
 
@@ -13,10 +16,7 @@ import (
 // ---- Type count check ----
 
 func TestExportedTypeCount(t *testing.T) {
-	// Simple reflection-based count: the test itself references types
-	// in the package, so if it compiles the types exist.
-	// Count via go doc check is done in acceptance criteria.
-	// Here we just verify at least a few core types compile.
+	// Compile-check: core types exist.
 	var _ *wml.CT_Document
 	var _ *wml.CT_P
 	var _ *wml.CT_R
@@ -27,7 +27,39 @@ func TestExportedTypeCount(t *testing.T) {
 	var _ *wml.CT_Tbl
 	var _ *wml.CT_SectPr
 	var _ *wml.CT_Settings
-	t.Log("Core types compile")
+
+	// Count exported CT_* types by parsing this package's source.
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseDir(fset, ".", nil, 0)
+	if err != nil {
+		t.Fatalf("ParseDir: %v", err)
+	}
+	count := 0
+	for _, pkg := range pkgs {
+		for _, file := range pkg.Files {
+			ast.Inspect(file, func(n ast.Node) bool {
+				gen, ok := n.(*ast.GenDecl)
+				if !ok || gen.Tok != token.TYPE {
+					return true
+				}
+				for _, spec := range gen.Specs {
+					ts, ok := spec.(*ast.TypeSpec)
+					if !ok {
+						continue
+					}
+					if strings.HasPrefix(ts.Name.Name, "CT_") && ts.Name.IsExported() {
+						count++
+					}
+				}
+				return false
+			})
+		}
+	}
+	const floor = 55
+	if count < floor {
+		t.Errorf("exported CT_* type count = %d, want >= %d", count, floor)
+	}
+	t.Logf("exported CT_* type count = %d", count)
 }
 
 // ---- Round-trip tests ----
@@ -282,5 +314,36 @@ func TestRoundTrip_Table(t *testing.T) {
 	}
 	if !strings.Contains(outStr, `<w:tc`) {
 		t.Errorf("table cell missing, got:\n%s", outStr)
+	}
+}
+
+func TestRunBoundaries(t *testing.T) {
+	hello := "Hello"
+	world := "World"
+	p := &wml.CT_P{
+		R: []*wml.CT_R{
+			{T: &wml.CT_Text{Value: hello}},
+			{T: &wml.CT_Text{Value: world}},
+		},
+	}
+
+	var buf bytes.Buffer
+	enc := xmlutil.NewEncoder(&buf)
+	if err := enc.Encode(p); err != nil {
+		t.Fatalf("Encode: %v", err)
+	}
+	enc.Flush()
+
+	outStr := buf.String()
+	if got := strings.Count(outStr, "<w:r"); got != 2 {
+		t.Errorf("expected 2 <w:r occurrences, got %d:\n%s", got, outStr)
+	}
+
+	var p2 wml.CT_P
+	if err := xml.Unmarshal([]byte(outStr), &p2); err != nil {
+		t.Fatalf("Unmarshal: %v", err)
+	}
+	if len(p2.R) != 2 {
+		t.Errorf("round-trip run count = %d, want 2", len(p2.R))
 	}
 }

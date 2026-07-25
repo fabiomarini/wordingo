@@ -347,3 +347,98 @@ func TestRunBoundaries(t *testing.T) {
 		t.Errorf("round-trip run count = %d, want 2", len(p2.R))
 	}
 }
+
+// ---- LvlOverride round-trip (Pitfall 4 fix) ----
+
+func TestCT_NumLvlOverrideRoundTrip(t *testing.T) {
+	tests := []struct {
+		name  string
+		xml   string
+		check func(t *testing.T, n *wml.CT_Numbering)
+	}{
+		{
+			name: "no lvlOverride baseline",
+			xml: `<w:numbering xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+<w:num w:numId="1"><w:abstractNumId w:val="0"/></w:num>
+</w:numbering>`,
+			check: func(t *testing.T, n *wml.CT_Numbering) {
+				if len(n.Num) != 1 {
+					t.Fatalf("Num count = %d, want 1", len(n.Num))
+				}
+				if len(n.Num[0].LvlOverride) != 0 {
+					t.Errorf("LvlOverride should be empty for baseline")
+				}
+			},
+		},
+		{
+			name: "lvlOverride with startOverride",
+			xml: `<w:numbering xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+<w:num w:numId="1"><w:abstractNumId w:val="0"/><w:lvlOverride w:ilvl="0"><w:startOverride w:val="5"/></w:lvlOverride></w:num>
+</w:numbering>`,
+			check: func(t *testing.T, n *wml.CT_Numbering) {
+				num := n.Num[0]
+				if len(num.LvlOverride) != 1 {
+					t.Fatalf("LvlOverride count = %d, want 1", len(num.LvlOverride))
+				}
+				lo := num.LvlOverride[0]
+				if lo.ILvl == nil || *lo.ILvl != 0 {
+					t.Errorf("ILvl = %v, want 0", lo.ILvl)
+				}
+				if lo.StartOverride == nil || lo.StartOverride.Val == nil || *lo.StartOverride.Val != 5 {
+					t.Errorf("StartOverride.Val = %v, want 5", lo.StartOverride.Val)
+				}
+				if lo.Lvl != nil {
+					t.Errorf("Lvl should be nil for startOverride-only")
+				}
+			},
+		},
+		{
+			name: "lvlOverride with full lvl replacement",
+			xml: `<w:numbering xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+<w:abstractNum w:abstractNumId="0"><w:lvl w:ilvl="1"><w:numFmt w:val="bullet"/><w:lvlText w:val="&#x2022;"/></w:lvl></w:abstractNum>
+<w:num w:numId="1"><w:abstractNumId w:val="0"/><w:lvlOverride w:ilvl="1"><w:lvl w:ilvl="1"><w:numFmt w:val="decimal"/><w:lvlText w:val="%1."/></w:lvl></w:lvlOverride></w:num>
+</w:numbering>`,
+			check: func(t *testing.T, n *wml.CT_Numbering) {
+				num := n.Num[0]
+				if len(num.LvlOverride) != 1 {
+					t.Fatalf("LvlOverride count = %d, want 1", len(num.LvlOverride))
+				}
+				lo := num.LvlOverride[0]
+				if lo.Lvl == nil {
+					t.Fatal("Lvl should not be nil for full lvl replacement")
+				}
+				if lo.Lvl.NumFmt == nil || lo.Lvl.NumFmt.Val == nil || *lo.Lvl.NumFmt.Val != "decimal" {
+					t.Errorf("Override Lvl.NumFmt.Val = %v, want decimal", lo.Lvl.NumFmt)
+				}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var n wml.CT_Numbering
+			dec := xmlutil.NewSafeDecoder(strings.NewReader(tt.xml), 4096)
+			if err := dec.Decode(&n); err != nil {
+				t.Fatalf("Decode: %v", err)
+			}
+			tt.check(t, &n)
+
+			// Marshal and verify round-trip
+			var buf bytes.Buffer
+			enc := xmlutil.NewEncoder(&buf)
+			if err := enc.Encode(&n); err != nil {
+				t.Fatalf("Encode: %v", err)
+			}
+			enc.Flush()
+
+			var n2 wml.CT_Numbering
+			dec2 := xmlutil.NewSafeDecoder(strings.NewReader(buf.String()), 4096)
+			if err := dec2.Decode(&n2); err != nil {
+				t.Fatalf("Re-decode after marshal: %v", err)
+			}
+			if len(n2.Num) != len(n.Num) {
+				t.Errorf("Num count mismatch after round-trip: got %d, want %d", len(n2.Num), len(n.Num))
+			}
+		})
+	}
+}

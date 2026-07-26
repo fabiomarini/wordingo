@@ -153,6 +153,35 @@ func (enc *Encoder) rewriteName(n *xml.Name) bool {
 	return false
 }
 
+// collectUsedPrefixes scans XML tokens and records every namespace
+// prefix used in element or attribute names.  The caller uses this to
+// ensure all needed xmlns:pfx declarations are emitted on the root.
+func collectUsedPrefixes(data []byte) map[string]struct{} {
+	used := make(map[string]struct{})
+	dec := xml.NewDecoder(bytes.NewReader(data))
+	for {
+		tok, err := dec.Token()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			break
+		}
+		switch t := tok.(type) {
+		case xml.StartElement:
+			if pfx := PrefixFor(t.Name.Space); pfx != "" {
+				used[pfx] = struct{}{}
+			}
+			for _, a := range t.Attr {
+				if pfx := PrefixFor(a.Name.Space); pfx != "" {
+					used[pfx] = struct{}{}
+				}
+			}
+		}
+	}
+	return used
+}
+
 // stripAllXMLNS removes all xmlns declarations from attrs — both
 // plain xmlns="…" (Local=="xmlns", Space=="") and prefixed
 // xmlns:pfx="…" (Space=="xmlns", Local=="pfx").
@@ -192,6 +221,9 @@ func (enc *Encoder) addNSDecls(se *xml.StartElement) {
 			prefixURI[pfx] = uri
 		}
 	}
+	// Override "r" to officeDocument relationships — the package
+	// relationships URI also maps to "r" but must not shadow this.
+	prefixURI["r"] = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 
 	for pfx := range enc.usedPrefixes {
 		if pfx == "xml" {
@@ -223,8 +255,20 @@ func (enc *Encoder) addNSDecls(se *xml.StartElement) {
 }
 
 // replayAll parses XML data and replays every token through
-// EncodeToken.
+// EncodeToken.  It does a two-pass scan to discover all namespace
+// prefixes before writing the root element, ensuring all xmlns:pfx
+// declarations are present.
 func (enc *Encoder) replayAll(data []byte) error {
+	// First pass: collect all namespace prefixes before any output.
+	allPrefixes := collectUsedPrefixes(data)
+
+	// Seed usedPrefixes so addNSDecls on the root includes them.
+	for pfx := range allPrefixes {
+		enc.usedPrefixes[pfx] = struct{}{}
+	}
+
+	// Second pass: replay through EncodeToken which now sees the
+	// full prefix set and will declare them on the root element.
 	dec := xml.NewDecoder(bytes.NewReader(data))
 	for {
 		tok, err := dec.Token()

@@ -4,16 +4,16 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 6
 status: Complete
-stopped_at: Phase 6 validation completed
-last_updated: "2026-07-26"
+stopped_at: Phase 06.1 context gathered
+last_updated: "2026-07-26T15:48:29.417Z"
 last_activity: 2026-07-26
 last_activity_desc: Phase 6 merge+edit implementation, validation, and v0.1.0 tag
 progress:
-  total_phases: 6
+  total_phases: 7
   completed_phases: 6
   total_plans: 16
   completed_plans: 16
-  percent: 100
+  percent: 86
 current_phase_name: merge-edit-v1-0
 ---
 
@@ -97,6 +97,10 @@ See PROJECT.md Key Decisions table.
 
 None currently — Phase 4 content API complete and verified
 
+### Roadmap Evolution
+
+- Phase 06.1 inserted after Phase 6: Add new Api to extract the content of the document as text and two new commands to convert to Mardown (GitHub flavored) and to import from Markdown (URGENT)
+
 ## Deferred Items
 
 | Category | Item | Status | Deferred At |
@@ -108,9 +112,9 @@ None currently — Phase 4 content API complete and verified
 
 ## Session Continuity
 
-**Resume file:** .planning/phases/06-merge-edit-v1-0/06-CONTEXT.md
+**Resume file:** .planning/phases/06.1-add-new-api-to-extract-the-content-of-the-document-as-text-a/06.1-CONTEXT.md
 
-**Last session:** 2026-07-26
-**Stopped at:** Phase 6 validation completed — all phases complete
+**Last session:** 2026-07-26T15:48:29.411Z
+**Stopped at:** Phase 06.1 context gathered
 
 Next: Milestone audit and v1.0 release

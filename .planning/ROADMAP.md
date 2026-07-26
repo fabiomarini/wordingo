@@ -115,10 +115,13 @@ Plans:
 
 **Plans**: 2 plans
 
-Plans:
+**Wave 1**
 
-- [ ] 04-01: Paragraph/Run builders + inline + paragraph formatting
-- [ ] 04-02: Named style application + public API polish (single package, X() escape hatch)
+- [ ] 04-01: Paragraph/Run builders + inline + paragraph formatting (API-01, API-02, QUAL-02)
+
+**Wave 2** *(blocked on 04-01 — needs Paragraph/Run types)*
+
+- [ ] 04-02: Named style application + public API polish (API-03, QUAL-01, QUAL-03)
 
 ### Phase 5: Rich Content
 

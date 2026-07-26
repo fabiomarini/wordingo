@@ -50,10 +50,11 @@ type CT_Ftr struct {
 
 // CT_P is a paragraph.
 type CT_P struct {
-	XMLName xml.Name `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main p"`
-	PPr     *CT_PPr  `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main pPr"`
-	R       []*CT_R  `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main r"`
-	Raw     []xmlutil.RawXML `xml:",any"`
+	XMLName  xml.Name        `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main p"`
+	PPr      *CT_PPr         `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main pPr"`
+	R        []*CT_R         `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main r"`
+	Hyperlink []*CT_Hyperlink `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main hyperlink"`
+	Raw      []xmlutil.RawXML `xml:",any"`
 }
 
 // CT_PPr holds paragraph properties.
@@ -71,17 +72,19 @@ type CT_PPr struct {
 	Tabs          *CT_Tabs         `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main tabs"`
 	SectPr        *CT_SectPr       `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main sectPr"`
 	Shd           *CT_Shd          `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main shd"`
+	OutlineLvl    *CT_OutlineLvl   `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main outlineLvl"`
 	Raw           []xmlutil.RawXML `xml:",any"`
 }
 
 // CT_R is a run (text with formatting scope).
 type CT_R struct {
-	XMLName xml.Name `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main r"`
-	RPr     *CT_RPr  `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main rPr"`
-	T       *CT_Text `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main t"`
-	Br      *CT_Br   `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main br"`
-	Tab     *CT_Tab  `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main tab"`
-	Cr      *CT_Cr   `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main cr"`
+	XMLName xml.Name    `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main r"`
+	RPr     *CT_RPr     `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main rPr"`
+	T       *CT_Text    `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main t"`
+	Br      *CT_Br      `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main br"`
+	Tab     *CT_Tab     `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main tab"`
+	Cr      *CT_Cr      `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main cr"`
+	Drawing *CT_Drawing `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main drawing"`
 	Raw     []xmlutil.RawXML `xml:",any"`
 }
 

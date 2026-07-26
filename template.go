@@ -50,7 +50,13 @@ func FromTemplateReader(r io.ReaderAt, size int64) (*Document, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Document{pkg: dst, doc: doc}, nil
+	return &Document{
+		pkg:          dst,
+		doc:          doc,
+		nextImageID:  1,
+		nextHeaderID: 1,
+		nextFooterID: 1,
+	}, nil
 }
 
 // OpenTemplate opens a .docx template from path, clones its style
@@ -129,5 +135,11 @@ func OpenTemplateReader(r io.ReaderAt, size int64) (*Document, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Document{pkg: dst, doc: doc}, nil
+	return &Document{
+		pkg:          dst,
+		doc:          doc,
+		nextImageID:  1,
+		nextHeaderID: 1,
+		nextFooterID: 1,
+	}, nil
 }

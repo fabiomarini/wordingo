@@ -30,4 +30,7 @@ const (
 
 	// NSXML is the xml: namespace (xml:space, xml:lang, etc.)
 	NSXML = "http://www.w3.org/XML/1998/namespace"
+
+	// NSPicture is the DrawingML picture namespace.
+	NSPicture = "http://schemas.openxmlformats.org/drawingml/2006/picture"
 )

@@ -37,7 +37,13 @@ func OpenReader(r io.ReaderAt, size int64) (*Document, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Document{pkg: pkg, doc: doc}, nil
+	return &Document{
+		pkg:          pkg,
+		doc:          doc,
+		nextImageID:  1,
+		nextHeaderID: 1,
+		nextFooterID: 1,
+	}, nil
 }
 
 // parseDocument reads word/document.xml from the package and

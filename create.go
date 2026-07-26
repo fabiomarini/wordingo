@@ -43,6 +43,17 @@ const (
 	relWebSettings    = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/webSettings"
 	relFontTable      = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/fontTable"
 	relTheme          = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme"
+	relHeader         = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/header"
+	relFooter         = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer"
+	relImage          = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"
+	relHyperlink      = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink"
+)
+
+const (
+	ctHeader = "application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"
+	ctFooter = "application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"
+	ctPng    = "image/png"
+	ctJpeg   = "image/jpeg"
 )
 
 func newBlankPackage() *opc.Package {
@@ -97,15 +108,16 @@ func newBlankPackage() *opc.Package {
 }
 
 // newTemplateTarget returns a fresh OPC package with infrastructure
-// parts (content types, relationships) but NO style parts — no
-// word/styles.xml, settings.xml, webSettings.xml, fontTable.xml, or
-// theme/theme1.xml.  This satisfies CloneStyles' fresh-empty-target
-// precondition (D-08) for FromTemplate/OpenTemplate operations.
+// parts (content types, relationships) but NO style engine parts —
+// no word/styles.xml, fontTable.xml, or theme/theme1.xml.  This
+// satisfies CloneStyles' fresh-empty-target precondition (D-08) for
+// FromTemplate/OpenTemplate operations.
 //
 // The package has:
-//   - [Content_Types].xml (defaults: rels/xml; override: document.xml)
+//   - [Content_Types].xml (defaults: rels/xml; overrides: doc + webSettings)
 //   - _rels/.rels (root → word/document.xml)
-//   - word/_rels/document.xml.rels (empty — CloneStyles adds relationships)
+//   - word/_rels/document.xml.rels (webSettings only — CloneStyles adds 5 style rels)
+//   - word/webSettings.xml (Word-open compatibility — Phase 1 webSettings default)
 //
 // word/document.xml must be added via MarkModified before Save.
 func newTemplateTarget() *opc.Package {
@@ -117,7 +129,8 @@ func newTemplateTarget() *opc.Package {
 				"xml":  ctXML,
 			},
 			Overrides: map[string]string{
-				"/word/document.xml": ctMain,
+				"/word/document.xml":    ctMain,
+				"/word/webSettings.xml": ctWebSettings,
 			},
 		},
 		Rels:        make(map[string]*opc.Relationships),
@@ -127,6 +140,7 @@ func newTemplateTarget() *opc.Package {
 	addPart(pkg, "[Content_Types].xml", nil)
 	addPart(pkg, "_rels/.rels", nil)
 	addPart(pkg, "word/_rels/document.xml.rels", nil)
+	addPart(pkg, "word/webSettings.xml", defaultWebSettings)
 
 	pkg.Rels[""] = &opc.Relationships{
 		Rels: []opc.Relationship{
@@ -134,7 +148,9 @@ func newTemplateTarget() *opc.Package {
 		},
 	}
 	pkg.Rels["word/document.xml"] = &opc.Relationships{
-		Rels: []opc.Relationship{},
+		Rels: []opc.Relationship{
+			{ID: "rId1", Type: relWebSettings, Target: "webSettings.xml"},
+		},
 	}
 
 	return pkg

@@ -11,7 +11,7 @@ Six phases, each with a hard gate that proves the phase's thesis before proceedi
 - [x] **Phase 3: Document Model** — open/read/save, STYLE-ROUNDTRIP, FromTemplate
 - [x] **Phase 4: Content API** — paragraphs, runs, formatting, named styles
 - [x] **Phase 5: Rich Content** — tables, images, headers/footers, lists, hyperlinks, page setup (completed 2026-07-26)
-- [ ] **Phase 6: Merge & Edit** — {{placeholder}} merge, insert/delete, v1.0
+- [x] **Phase 6: Merge & Edit** — {{placeholder}} merge, insert/delete, v1.0 (completed 2026-07-26)
 
 ## Phase Details
 
@@ -156,16 +156,16 @@ Plans:
   3. Insert/delete paragraphs and rows; replace run text; all edits round-trip-safe
   4. All four PRD use cases (UC1–UC4) pass end-to-end; v0.1.0 tagged
 
-**Plans**: 2 plans
+**Plans**: 2/2 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 06-01-PLAN.md — Merge engine (merge.go): placeholder detection across split runs, all part types, missing-key warnings
+- [x] 06-01-PLAN.md — Merge engine (merge.go): placeholder detection across split runs, all part types, missing-key warnings
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 06-02-PLAN.md — Edit ops + BodyElement + acceptance: InsertBefore/After/DeleteParagraph, DeleteRow, SetText/ReplaceText, BodyElement, ParagraphContainer, UC1–UC4, v0.1.0 tag
+- [x] 06-02-PLAN.md — Edit ops + BodyElement + acceptance: InsertBefore/After/DeleteParagraph, DeleteRow, SetText/ReplaceText, BodyElement, ParagraphContainer, UC1–UC4, v0.1.0 tag
 
 ## Progress
 
@@ -176,6 +176,6 @@ Plans:
 | 3. Document Model | 2/2 | ✅ Complete | Zero unintended diffs on round-trip |
 | 4. Content API | 2/2 | ✅ Complete | Formatted text doc programmatically |
 | 5. Rich Content | 3/3 | Complete    | 2026-07-26 |
-| 6. Merge & Edit | 0/2 | Planned | UC1–UC4 green, v0.1.0 tagged |
+| 6. Merge & Edit | 2/2 | Complete   | 2026-07-26 |  |
 
 Total: 16 plans, 16 complete, 33 v1 requirements.

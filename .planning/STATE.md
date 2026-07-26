@@ -3,18 +3,18 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 current_phase: 6
-current_phase_name: v1.0
-status: Ready to plan
-stopped_at: Phase 6 context gathered
-last_updated: "2026-07-26T14:06:40.317Z"
+status: Complete
+stopped_at: Phase 6 validation completed
+last_updated: "2026-07-26"
 last_activity: 2026-07-26
-last_activity_desc: Phase 05 complete, transitioned to Phase 6
+last_activity_desc: Phase 6 merge+edit implementation, validation, and v0.1.0 tag
 progress:
   total_phases: 6
-  completed_phases: 5
-  total_plans: 14
-  completed_plans: 14
-  percent: 83
+  completed_phases: 6
+  total_plans: 16
+  completed_plans: 16
+  percent: 100
+current_phase_name: merge-edit-v1-0
 ---
 
 # Project State
@@ -25,23 +25,23 @@ See: .planning/PROJECT.md (updated 2026-07-25)
 PRD: .planning/PRD.md (authoritative, 2026-07-25)
 
 **Core value:** Create styled .docx documents in Go — from a template or from scratch — that open in Word looking exactly as designed.
-**Current focus:** Phase 05 — rich-content
+**Current focus:** Phase 6 — merge-edit-v1-0
 
 ## Current Position
 
-Phase: 6 — Merge & Edit (v1.0)
-Plans: 3 of 4 complete (05-01 ✓, 05-02 ✓, 05-03 ✓)
-Last activity: 2026-07-26 — Phase 05 complete, transitioned to Phase 6
+Phase: 6 — COMPLETE
+Plans: 16 of 16 complete
+Last activity: 2026-07-26 — Phase 6 merge+edit implementation, validation, and v0.1.0 tag
 
-Progress: [██████████] 93%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 14 (Phase 1: 3, Phase 2: 4, Phase 3: 2, Phase 4: 2, Phase 5: 3)
+- Total plans completed: 16 (Phase 1: 3, Phase 2: 4, Phase 3: 2, Phase 4: 2, Phase 5: 3, Phase 6: 2)
 - Average duration: ~13 min/plan
-- Total execution time: ~158 min
+- Total execution time: ~184 min
 
 ## Accumulated Context
 
@@ -75,6 +75,20 @@ See PROJECT.md Key Decisions table.
 - [Phase 05-03]: No hyperlink URI dedup — new rId per call (negligible ~50 bytes/extra)
 - [Phase 05-03]: numId=0 reserved for Word ListNumber; auto-IDs start at 1
 
+### Phase 6 Decisions
+
+- [Phase 06-01]: Merge(data, opts) signature with MergeOpts.ScopedParts for part-scoped scanning
+- [Phase 06-01]: nil opts defaults to scanning all parts (Body, Tables, Headers, Footers)
+- [Phase 06-01]: Split-run detection via char offset mapping from joined text → runSpans; first fragment gets value, others deleted (T.Value = "")
+- [Phase 06-01]: Non-text runs (Br, Tab, Cr, Drawing) excluded from merged text, preserved in output
+- [Phase 06-01]: Header/footer sync after merge modification re-encodes part via xmlutil.NewEncoder
+- [Phase 06-02]: Pointer-based paragraph editing (no index-based targeting per D-08)
+- [Phase 06-02]: BodyElement struct union (not interface) per D-09 for allocation efficiency
+- [Phase 06-02]: Keep Paragraphs()/Tables() backward compat + add Body()
+- [Phase 06-02]: ParagraphContainer interface on Header/Footer with InsertParagraphAt/DeleteParagraphAt
+- [Phase 06-02]: DeleteRow returns error on OOB, not panic
+- [Phase 06-02]: v0.1.0 release tag
+
 ### Pending Todos
 
 - Commit test fixture corpus (real .docx files under testdata/)
@@ -96,7 +110,7 @@ None currently — Phase 4 content API complete and verified
 
 **Resume file:** .planning/phases/06-merge-edit-v1-0/06-CONTEXT.md
 
-**Last session:** 2026-07-26T14:06:40.310Z
-**Stopped at:** Phase 6 context gathered
+**Last session:** 2026-07-26
+**Stopped at:** Phase 6 validation completed — all phases complete
 
-Next: Execute 05-04 (Formatting Consolidation)
+Next: Milestone audit and v1.0 release

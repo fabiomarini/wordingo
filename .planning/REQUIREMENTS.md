@@ -56,21 +56,21 @@ Three distinct operations, explicitly separated. Do not conflate.
 
 ### Template Merge
 
-- [ ] **MERGE-01**: Replace {{key}} in paragraphs, table cells, headers, footers
-- [ ] **MERGE-02**: Placeholders split across multiple runs detected and merged, preserving first-fragment formatting
-- [ ] **MERGE-03**: Missing keys surfaced in Warnings(), never silent corruption
+- [x] **MERGE-01**: Replace {{key}} in paragraphs, table cells, headers, footers
+- [x] **MERGE-02**: Placeholders split across multiple runs detected and merged, preserving first-fragment formatting
+- [x] **MERGE-03**: Missing keys surfaced in Warnings(), never silent corruption
 
 ### Editing
 
-- [ ] **EDIT-01**: Insert paragraph before/after target; delete paragraph; delete table row
-- [ ] **EDIT-02**: Replace text within a run without disturbing adjacent formatting
-- [ ] **EDIT-03**: All edits honor STYLE-ROUNDTRIP
+- [x] **EDIT-01**: Insert paragraph before/after target; delete paragraph; delete table row
+- [x] **EDIT-02**: Replace text within a run without disturbing adjacent formatting
+- [x] **EDIT-03**: All edits honor STYLE-ROUNDTRIP
 
 ### API Quality
 
-- [ ] **QUAL-01**: Open from io.ReaderAt, save to io.Writer — paths are convenience only
-- [ ] **QUAL-02**: No panics; all failures as errors; Warnings() for non-fatal issues
-- [ ] **QUAL-03**: Single public package; X() escape hatch to WML types on every wrapper
+- [x] **QUAL-01**: Open from io.ReaderAt, save to io.Writer — paths are convenience only
+- [x] **QUAL-02**: No panics; all failures as errors; Warnings() for non-fatal issues
+- [x] **QUAL-03**: Single public package; X() escape hatch to WML types on every wrapper
 
 ## v2 Requirements
 
@@ -107,10 +107,10 @@ Deferred behind v1 validation.
 | STYLE-ROUNDTRIP-01..02 | Phase 3 | Pending |
 | CREATE-03, CREATE-04 | Phase 3 | Pending |
 | API-01..03 | Phase 4 | Pending |
-| API-04..09 | Phase 5 | Pending |
-| MERGE-01..03 | Phase 6 | Pending |
-| EDIT-01..03 | Phase 6 | Pending |
-| QUAL-01..03 | All phases | Pending |
+| API-04..09 | Phase 5 | Complete |
+| MERGE-01..03 | Phase 6 | Implemented |
+| EDIT-01..03 | Phase 6 | Implemented |
+| QUAL-01..03 | All phases | Implemented |
 
 **Coverage:** 33 v1 requirements, all mapped ✓
 

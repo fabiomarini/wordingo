@@ -6,15 +6,15 @@ current_phase: 05
 current_phase_name: rich-content
 status: executing
 stopped_at: Phase 5 execution started
-last_updated: "2026-07-26T11:05:00Z"
+last_updated: "2026-07-26T10:13:33Z"
 last_activity: 2026-07-26
-last_activity_desc: Completed 05-01 Tables+Images
+last_activity_desc: Completed 05-03 Lists+Hyperlinks
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 14
-  completed_plans: 13
-  percent: 93
+  completed_plans: 14
+  percent: 100
 ---
 
 # Project State
@@ -30,8 +30,8 @@ PRD: .planning/PRD.md (authoritative, 2026-07-25)
 ## Current Position
 
 Phase: 05 (rich-content) — EXECUTING
-Plans: 2 of 4 complete (05-01 ✓, 05-02 ✓)
-Last activity: 2026-07-26 — Completed 05-02 HdrFtr+PageSetup
+Plans: 3 of 4 complete (05-01 ✓, 05-02 ✓, 05-03 ✓)
+Last activity: 2026-07-26 — Completed 05-03 Lists+Hyperlinks
 
 Progress: [██████████] 93%
 
@@ -39,9 +39,9 @@ Progress: [██████████] 93%
 
 **Velocity:**
 
-- Total plans completed: 13 (Phase 1: 3, Phase 2: 4, Phase 3: 2, Phase 4: 2, Phase 5: 2)
-- Average duration: 14 min/plan
-- Total execution time: ~157 min
+- Total plans completed: 14 (Phase 1: 3, Phase 2: 4, Phase 3: 2, Phase 4: 2, Phase 5: 3)
+- Average duration: ~13 min/plan
+- Total execution time: ~158 min
 
 ## Accumulated Context
 
@@ -72,6 +72,8 @@ See PROJECT.md Key Decisions table.
 - [Phase 05-01]: Image auto-size at 3in default width, DPI-aware when JFIF/pHYs available
 - [Phase 05-01]: nextImageID/nextHeaderID/nextFooterID init to 1 (no rel scan in v1)
 - [Phase 05-01]: CT_Anchor defined as placeholder with RawXML hoarding
+- [Phase 05-03]: No hyperlink URI dedup — new rId per call (negligible ~50 bytes/extra)
+- [Phase 05-03]: numId=0 reserved for Word ListNumber; auto-IDs start at 1
 
 ### Pending Todos
 
@@ -94,7 +96,7 @@ None currently — Phase 4 content API complete and verified
 
 **Resume file:** .planning/phases/05-rich-content/05-CONTEXT.md
 
-**Last session:** 2026-07-26T10:07:46Z
-**Stopped at:** Completed 05-02 HdrFtr+PageSetup
+**Last session:** 2026-07-26T10:13:33Z
+**Stopped at:** Completed 05-03 Lists+Hyperlinks
 
-Next: Execute 05-03 (Lists/Hyperlinks) or 05-04 (Formatting Consolidation)
+Next: Execute 05-04 (Formatting Consolidation)

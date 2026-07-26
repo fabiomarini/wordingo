@@ -216,8 +216,9 @@ type CT_DocGrid struct {
 }
 
 // CT_HdrFtrRef references a header or footer part.
+// The element name is determined by the parent struct field tag
+// (headerReference for HdrFtrRef, footerReference for FtrRef).
 type CT_HdrFtrRef struct {
-	XMLName xml.Name `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main headerReference"`
-	ID      string   `xml:"http://schemas.openxmlformats.org/officeDocument/2006/relationships id,attr"`
-	Type    string   `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main type,attr"`
+	ID   string `xml:"http://schemas.openxmlformats.org/officeDocument/2006/relationships id,attr"`
+	Type string `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main type,attr"`
 }

@@ -11,14 +11,16 @@ import (
 
 // Header wraps a WordprocessingML header part (w:hdr).
 type Header struct {
-	ct  *wml.CT_Hdr
-	doc *Document
+	ct       *wml.CT_Hdr
+	doc      *Document
+	partName string
 }
 
 // Footer wraps a WordprocessingML footer part (w:ftr).
 type Footer struct {
-	ct  *wml.CT_Ftr
-	doc *Document
+	ct       *wml.CT_Ftr
+	doc      *Document
+	partName string
 }
 
 // X returns the underlying CT_Hdr for escape-hatch access.
@@ -37,6 +39,23 @@ func (f *Footer) X() *wml.CT_Ftr {
 	return f.ct
 }
 
+func (h *Header) sync() {
+	var buf bytes.Buffer
+	buf.WriteString(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`)
+	buf.WriteByte('\n')
+	enc := xmlutil.NewEncoder(&buf)
+	if err := enc.Encode(h.ct); err != nil {
+		h.doc.warn("wordingo: encode header: %v", err)
+		return
+	}
+	if err := enc.Flush(); err != nil {
+		h.doc.warn("wordingo: flush header: %v", err)
+		return
+	}
+	h.doc.pkg.MarkModified(h.partName, buf.Bytes())
+	h.doc.dirty = true
+}
+
 // AddParagraph appends a paragraph with optional text to the header
 // and returns it.  The paragraph is added as a child of the header
 // element (w:hdr/w:p).
@@ -49,8 +68,25 @@ func (h *Header) AddParagraph(text string) *Paragraph {
 		ct.R = []*wml.CT_R{{T: &wml.CT_Text{Value: text}}}
 	}
 	h.ct.P = append(h.ct.P, ct)
-	h.doc.dirty = true
+	h.sync()
 	return &Paragraph{ct: ct, doc: h.doc}
+}
+
+func (f *Footer) sync() {
+	var buf bytes.Buffer
+	buf.WriteString(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`)
+	buf.WriteByte('\n')
+	enc := xmlutil.NewEncoder(&buf)
+	if err := enc.Encode(f.ct); err != nil {
+		f.doc.warn("wordingo: encode footer: %v", err)
+		return
+	}
+	if err := enc.Flush(); err != nil {
+		f.doc.warn("wordingo: flush footer: %v", err)
+		return
+	}
+	f.doc.pkg.MarkModified(f.partName, buf.Bytes())
+	f.doc.dirty = true
 }
 
 // AddParagraph appends a paragraph with optional text to the footer
@@ -65,7 +101,7 @@ func (f *Footer) AddParagraph(text string) *Paragraph {
 		ct.R = []*wml.CT_R{{T: &wml.CT_Text{Value: text}}}
 	}
 	f.ct.P = append(f.ct.P, ct)
-	f.doc.dirty = true
+	f.sync()
 	return &Paragraph{ct: ct, doc: f.doc}
 }
 
@@ -153,7 +189,7 @@ func (d *Document) AddHeader(variant HeaderVariant) *Header {
 	d.doc.Body.SectPr.HdrFtrRef = append(d.doc.Body.SectPr.HdrFtrRef, ref)
 
 	d.dirty = true
-	return &Header{ct: hdr, doc: d}
+	return &Header{ct: hdr, doc: d, partName: partName}
 }
 
 // AddFooter creates a footer part with the given variant (default, first,
@@ -210,5 +246,5 @@ func (d *Document) AddFooter(variant FooterVariant) *Footer {
 	d.doc.Body.SectPr.FtrRef = append(d.doc.Body.SectPr.FtrRef, ref)
 
 	d.dirty = true
-	return &Footer{ct: ftr, doc: d}
+	return &Footer{ct: ftr, doc: d, partName: partName}
 }

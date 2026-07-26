@@ -123,7 +123,7 @@ func TestHeader_AddContent(t *testing.T) {
 		t.Errorf("expected 2 header paragraphs, got %d", len(h.X().P))
 	}
 
-	// Serialized part contains the initial Normal paragraph
+	// Serialized part contains both initial paragraph and added content
 	var buf bytes.Buffer
 	if _, err := doc.WriteTo(&buf); err != nil {
 		t.Fatal(err)
@@ -133,13 +133,12 @@ func TestHeader_AddContent(t *testing.T) {
 	if !strings.Contains(headerContent, "<w:p") {
 		t.Error("header1.xml missing w:p element")
 	}
-	// KNOWN BUG: AddHeader serializes CT_Hdr immediately; AddParagraph
-	// in-memory changes are not re-serialized. Content "Header text" is
-	// missing from the serialized part.
+	if !strings.Contains(headerContent, "Header text") {
+		t.Error("header1.xml missing paragraph text 'Header text'")
+	}
 }
 
 func TestHeader_ContentPersists(t *testing.T) {
-	t.Skip("KNOWN BUG: header content added via AddParagraph is not re-serialized — see header.go AddHeader/AddParagraph")
 	doc, err := Create()
 	if err != nil {
 		t.Fatal(err)
@@ -194,16 +193,14 @@ func TestFooter_AddFooter(t *testing.T) {
 		t.Error("document.xml.rels missing footer target")
 	}
 
-	// Verify sectPr has a reference (currently serializes as headerReference
-	// due to CT_HdrFtrRef.XMLName being hardcoded in internal/wml/document.go:220)
+	// Verify sectPr has a footerReference
 	docContent := readZipEntryFromBuf(t, buf.Bytes(), "word/document.xml")
-	if !strings.Contains(docContent, "w:headerReference") {
-		t.Error("document.xml missing headerReference in sectPr (should be footerReference — KNOWN BUG)")
+	if !strings.Contains(docContent, "w:footerReference") {
+		t.Error("document.xml missing footerReference in sectPr")
 	}
 }
 
-func TestFooter_SectPrLink_Bug(t *testing.T) {
-	t.Skip("KNOWN BUG: CT_HdrFtrRef.XMLName hardcoded to 'headerReference' in internal/wml/document.go:220 — footer references serialize as w:headerReference")
+func TestFooter_SectPrLink(t *testing.T) {
 	doc, err := Create()
 	if err != nil {
 		t.Fatal(err)
@@ -244,11 +241,12 @@ func TestFooter_AddContent(t *testing.T) {
 	if !strings.Contains(footerContent, "<w:ftr") {
 		t.Error("footer1.xml missing w:ftr root element")
 	}
-	// KNOWN BUG: same serialization issue as header content
+	if !strings.Contains(footerContent, "Footer text") {
+		t.Error("footer1.xml missing paragraph text 'Footer text'")
+	}
 }
 
 func TestFooter_ContentPersists(t *testing.T) {
-	t.Skip("KNOWN BUG: footer content added via AddParagraph is not re-serialized — see header.go AddFooter/AddParagraph")
 	doc, err := Create()
 	if err != nil {
 		t.Fatal(err)

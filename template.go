@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 
 	"github.com/fabiomarini/wordingo/internal/opc"
 	"github.com/fabiomarini/wordingo/internal/style"
@@ -90,8 +91,14 @@ func OpenTemplateReader(r io.ReaderAt, size int64) (*Document, error) {
 		return nil, fmt.Errorf("wordingo: clone styles: %w", err)
 	}
 
-	// Read source body content, preserve paragraphs and tables,
-	// replace sectPr with clean default (no HdrFtrRef/FtrRef — Pitfall 4).
+	srcRels := src.Rels["word/document.xml"]
+	dstRels := dst.Rels["word/document.xml"]
+	if dstRels == nil {
+		dstRels = &opc.Relationships{}
+		dst.Rels["word/document.xml"] = dstRels
+	}
+
+	// Read source body content.
 	srcPart, ok := src.Parts["word/document.xml"]
 	if !ok {
 		return nil, fmt.Errorf("wordingo: template missing word/document.xml: %w", opc.ErrInvalidPackage)
@@ -108,14 +115,101 @@ func OpenTemplateReader(r io.ReaderAt, size int64) (*Document, error) {
 		return nil, fmt.Errorf("wordingo: decode template body: %w", err)
 	}
 
-	// Build fresh doc with source body content but clean sectPr.
-	// This strips any header/footer references that would dangle
-	// after CloneStyles allocates fresh rIds.
+	// Clone header/footer parts referenced in source sectPr (D-13,
+	// reverse Phase 3 Pitfall 4).  Allocate fresh rIds via dstRels
+	// to avoid collisions (T-05-05).
+	srcSectPr := srcDoc.Body.SectPr
+	sectPr := defaultSectPr()
+
+	if srcSectPr != nil {
+		// Clone header references.
+		for _, ref := range srcSectPr.HdrFtrRef {
+			if srcRels == nil {
+				continue
+			}
+			srcRel := findRelByID(srcRels, ref.ID)
+			if srcRel == nil {
+				continue
+			}
+			target := path.Join("word", srcRel.Target)
+			srcPart, ok := src.Parts[target]
+			if !ok {
+				continue
+			}
+			partBytes, err := readPartBytes(srcPart)
+			if err != nil {
+				continue
+			}
+
+			// Copy header part to dst with fresh rId.
+			dst.MarkModified(target, partBytes)
+			dst.ContentTypes.Overrides["/"+target] = ctHeader
+			newID := dstRels.NextRID()
+			dstRels.Rels = append(dstRels.Rels, opc.Relationship{
+				ID:     newID,
+				Type:   relHeader,
+				Target: srcRel.Target,
+			})
+
+			sectPr.HdrFtrRef = append(sectPr.HdrFtrRef, &wml.CT_HdrFtrRef{
+				ID:   newID,
+				Type: ref.Type,
+			})
+		}
+
+		// Clone footer references.
+		for _, ref := range srcSectPr.FtrRef {
+			if srcRels == nil {
+				continue
+			}
+			srcRel := findRelByID(srcRels, ref.ID)
+			if srcRel == nil {
+				continue
+			}
+			target := path.Join("word", srcRel.Target)
+			srcPart, ok := src.Parts[target]
+			if !ok {
+				continue
+			}
+			partBytes, err := readPartBytes(srcPart)
+			if err != nil {
+				continue
+			}
+
+			dst.MarkModified(target, partBytes)
+			dst.ContentTypes.Overrides["/"+target] = ctFooter
+			newID := dstRels.NextRID()
+			dstRels.Rels = append(dstRels.Rels, opc.Relationship{
+				ID:     newID,
+				Type:   relFooter,
+				Target: srcRel.Target,
+			})
+
+			sectPr.FtrRef = append(sectPr.FtrRef, &wml.CT_HdrFtrRef{
+				ID:   newID,
+				Type: ref.Type,
+			})
+		}
+
+		// Preserve TitlePg if source has it.
+		sectPr.TitlePg = srcSectPr.TitlePg
+	}
+
+	// Re-use source PgSz/PgMar (if present) instead of defaults.
+	if srcSectPr != nil {
+		if srcSectPr.PgSz != nil {
+			sectPr.PgSz = srcSectPr.PgSz
+		}
+		if srcSectPr.PgMar != nil {
+			sectPr.PgMar = srcSectPr.PgMar
+		}
+	}
+
 	freshDoc := &wml.CT_Document{
 		Body: &wml.CT_Body{
 			P:      srcDoc.Body.P,
 			Tbl:    srcDoc.Body.Tbl,
-			SectPr: defaultSectPr(),
+			SectPr: sectPr,
 		},
 	}
 
@@ -142,4 +236,27 @@ func OpenTemplateReader(r io.ReaderAt, size int64) (*Document, error) {
 		nextHeaderID: 1,
 		nextFooterID: 1,
 	}, nil
+}
+
+// findRelByID returns the relationship with the given ID from rs, or nil.
+func findRelByID(rs *opc.Relationships, id string) *opc.Relationship {
+	if rs == nil {
+		return nil
+	}
+	for i := range rs.Rels {
+		if rs.Rels[i].ID == id {
+			return &rs.Rels[i]
+		}
+	}
+	return nil
+}
+
+// readPartBytes reads the full payload of an OPC part.
+func readPartBytes(part *opc.Part) ([]byte, error) {
+	rc, err := part.Open()
+	if err != nil {
+		return nil, err
+	}
+	defer rc.Close()
+	return io.ReadAll(rc)
 }

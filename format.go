@@ -54,6 +54,68 @@ type ParIndent struct {
 	Hanging   int64
 }
 
+// HeaderVariant specifies the header type for a section.
+type HeaderVariant int
+
+const (
+	HeaderDefault HeaderVariant = iota
+	HeaderFirst
+	HeaderEven
+)
+
+func (v HeaderVariant) String() string {
+	switch v {
+	case HeaderDefault:
+		return "default"
+	case HeaderFirst:
+		return "first"
+	case HeaderEven:
+		return "even"
+	default:
+		return "default"
+	}
+}
+
+// FooterVariant specifies the footer type for a section.
+type FooterVariant int
+
+const (
+	FooterDefault FooterVariant = iota
+	FooterFirst
+	FooterEven
+)
+
+func (v FooterVariant) String() string {
+	switch v {
+	case FooterDefault:
+		return "default"
+	case FooterFirst:
+		return "first"
+	case FooterEven:
+		return "even"
+	default:
+		return "default"
+	}
+}
+
+// PageOrientation specifies page orientation.
+type PageOrientation int
+
+const (
+	OrientationPortrait  PageOrientation = iota
+	OrientationLandscape
+)
+
+// Paper size constants in twips.
+const (
+	PaperLetterW int64 = 12240
+	PaperLetterH int64 = 15840
+	PaperA4W    int64 = 11906
+	PaperA4H    int64 = 16838
+	PaperLegalW int64 = 12240
+	PaperLegalH int64 = 20160
+)
+
 // TableBorders holds table border definitions for use with TableBuilder.
 type TableBorders struct {
 	Top     *BorderDef

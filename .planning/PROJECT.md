@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A pure Go, MIT-licensed, zero-dependency library for creating Microsoft Word (.docx) documents from scratch or from existing templates — blank or pre-populated — while preserving styles for every document object: titles, headings, paragraphs, runs, tables, lists, headers, and footers. Imported by Go applications as a library, not run as a CLI.
+A pure Go, MIT-licensed, zero-dependency library for creating Microsoft Word (.docx) documents from scratch or from existing templates — blank or pre-populated — while preserving styles for every document object: titles, headings, paragraphs, runs, tables, lists, headers, and footers. Also supports template merge with `{{placeholder}}` replacement, edit operations, text extraction, and GFM markdown conversion. Imported by Go applications as a library, not run as a CLI.
 
 See `.planning/PRD.md` for the full product requirements document (authoritative source).
 
@@ -21,19 +21,22 @@ Create styled .docx documents in Go — from a template or from scratch — that
 
 ### Validated
 
-- [x] OPC package layer (ZIP + content types + relationships + namespace registry) — Phase 1
-- [x] WML schema types (~60 essential WordprocessingML structs) — Phase 1
-- [x] Blank document creation with professional defaults — Phase 1
-- [x] STYLE-CLONE: template style dependency graph copy — Phase 2
-- [x] STYLE-RESOLVE: effective property resolution — Phase 2
-- [x] STYLE-ROUNDTRIP: edit + save with zero unintended changes — Phase 3
-- [x] Content API: paragraphs, runs, formatting, named styles — Phase 4
-- [x] Rich content: tables, images, headers/footers, lists, hyperlinks, page setup — Phase 5
+- [x] OPC package layer (ZIP + content types + relationships + namespace registry) — Phase 1 — v0.1.0
+- [x] WML schema types (~60 essential WordprocessingML structs) — Phase 1 — v0.1.0
+- [x] Blank document creation with professional defaults — Phase 1 — v0.1.0
+- [x] STYLE-CLONE: template style dependency graph copy — Phase 2 — v0.1.0
+- [x] STYLE-RESOLVE: effective property resolution — Phase 2 — v0.1.0
+- [x] STYLE-ROUNDTRIP: edit + save with zero unintended changes — Phase 3 — v0.1.0
+- [x] Content API: paragraphs, runs, formatting, named styles — Phase 4 — v0.1.0
+- [x] Rich content: tables, images, headers/footers, lists, hyperlinks, page setup — Phase 5 — v0.1.0
+- [x] Template merge with `{{placeholder}}` replacement (including split-run placeholders) — Phase 6 — v0.1.0
+- [x] Edit operations: insert/delete paragraphs and rows, replace run text — Phase 6 — v0.1.0
+- [x] Text extraction and GFM markdown export — Phase 06.1 — v0.1.0
+- [x] Markdown import (CreateFromMarkdown, ImportMarkdown) — Phase 06.1 — v0.1.0
 
 ### Active
 
-- [ ] {{placeholder}} template merge (including split-run placeholders)
-- [ ] Edit operations: insert/delete paragraphs and rows, replace run text
+*(None — v0.1.0 shipped all planned requirements)*
 
 ### Out of Scope
 
@@ -45,9 +48,36 @@ Create styled .docx documents in Go — from a template or from scratch — that
 - Full OOXML spec coverage — ~60 types modeled; unknown elements preserved, not parsed
 - Field codes, comments, bookmarks, content controls, tracked changes, charts, equations — v2, deferred behind validation
 
+## Current State (v0.1.0)
+
+Shipped 2026-07-26. 19,870 LOC Go, 7 phases, 18 plans, 37 requirements.
+
+**What shipped:**
+- OPC package, WML types, blank document generator
+- Full style engine (clone + resolve + round-trip)
+- Document model (open/read/save, FromTemplate)
+- Content API (paragraph/run builders, named styles)
+- Rich content (tables, images, headers/footers, lists, hyperlinks, page setup)
+- Merge engine + edit operations with acceptance tests
+- Text extraction + GFM markdown export/import
+
+**Tech debt:**
+- Test fixture corpus not committed (integration tests skip)
+- Tables render after paragraphs only (v1 limitation)
+- P2 resolver not wired into public API (Word resolves at open time)
+
 ## Context
 
 Researched 2026-07-25 (see `.planning/research/`): 20+ Go docx modules surveyed. Complete ones are AGPL/commercial; MIT ones are partial or immature. The missing capability is style fidelity — documents that render like the template because styles.xml, numbering.xml, fontTable.xml, and theme.xml were handled as a dependency graph, not copied as files. Microsoft's DocumentFormat.OpenXml (.NET) provides the architectural reference for part structure and style inheritance. Implementation is from-scratch Go stdlib code (~bounded scope, not a transliteration).
+
+## Next Milestone Goals
+
+v0.2.0 / v1.1 — TBD. Potential candidates:
+- Field codes (PAGE, DATE, NUMPAGES, TOC)
+- Multiple sections with independent page setup
+- Image positioning and text wrapping
+- Comments, bookmarks, footnotes, endnotes
+- Content controls (SDT), form fields
 
 ## Constraints
 
@@ -61,12 +91,15 @@ Researched 2026-07-25 (see `.planning/research/`): 20+ Go docx modules surveyed.
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Build from scratch, not wrap existing Go libs | AGPL on complete libs; MIT libs lack style engine | — Pending |
-| Stdlib only (`archive/zip` + `encoding/xml`) | Zero deps = zero license/supply-chain review for adopters; trade-off is ~500 LOC namespace registry | — Pending |
-| Library, not CLI; from-scratch, not a port | CLI infrastructure (commands, batch, watch, rendering) does not belong in a Go library; ISO 29500 is the spec, DocumentFormat.OpenXml the conceptual reference | — Pending |
-| Three separate style operations (clone/resolve/roundtrip) | Conflating them produces one mechanism that does none well | — Pending |
-| MVP proves style thesis before rich content | If template-styled output doesn't render correctly, tables/images don't matter | — Pending |
-| Transitional conformance on write | Maximum compatibility (Office 2007 through M365) | — Pending |
+| Build from scratch, not wrap existing Go libs | AGPL on complete libs; MIT libs lack style engine | ✓ Good — v0.1.0 validated |
+| Stdlib only (`archive/zip` + `encoding/xml`) | Zero deps = zero license/supply-chain review for adopters; trade-off is ~500 LOC namespace registry | ✓ Good — v0.1.0 validated |
+| Library, not CLI; from-scratch, not a port | CLI infrastructure does not belong in a Go library; ISO 29500 is the spec | ✓ Good — v0.1.0 validated |
+| Three separate style operations (clone/resolve/roundtrip) | Conflating them produces one mechanism that does none well | ✓ Good — Phase 2 validated |
+| MVP proves style thesis before rich content | If template-styled output doesn't render correctly, tables/images don't matter | ✓ Good — thesis proven |
+| Transitional conformance on write | Maximum compatibility (Office 2007 through M365) | ✓ Good — validated |
+| Tables render after paragraphs only | Simpler implementation for v1 | ⚠️ v1 limitation, revisit for v2 |
+| Merge by pointer identity (not index) | Avoids O(n²) index tracking during edits | ✓ Good — validated in UC1–UC4 |
+| BodyElement struct union (not interface) | Allocation efficiency | ✓ Good — validated |
 
 ## Evolution
 
@@ -86,4 +119,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-26 after Phase 5 completion*
+*Last updated: 2026-07-26 after v0.1.0 milestone*

@@ -104,7 +104,18 @@ type CT_TcPr struct {
 	VMerge   *CT_VMerge      `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main vMerge"`
 	TcW      *CT_TblW        `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main tcW"`
 	Shd      *CT_Shd         `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main shd"`
+	Borders  *CT_TcBorders   `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main tcBorders"`
 	Raw      []xmlutil.RawXML `xml:",any"`
+}
+
+// CT_TcBorders holds table cell border definitions.
+type CT_TcBorders struct {
+	XMLName xml.Name       `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main tcBorders"`
+	Top     *CT_TblBorder  `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main top"`
+	Left    *CT_TblBorder  `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main left"`
+	Bottom  *CT_TblBorder  `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main bottom"`
+	Right   *CT_TblBorder  `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main right"`
+	Raw     []xmlutil.RawXML `xml:",any"`
 }
 
 // CT_GridSpan is horizontal cell merge width.

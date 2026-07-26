@@ -179,3 +179,19 @@ Plans:
 | 6. Merge & Edit | 2/2 | Complete   | 2026-07-26 |  |
 
 Total: 16 plans, 16 complete, 33 v1 requirements.
+
+### Phase 06.1: Text Extraction & Markdown Conversion (INSERTED)
+
+**Goal:** Document text extraction, GFM export, and GFM import on the `Document` type
+**Requirements**: TEXT-01, MD-EXPORT-01, MD-IMPORT-01, MD-IMPORT-02
+**Depends on:** Phase 6
+**Plans:** 2 plans
+
+Plans:
+**Wave 1**
+
+- [ ] 06.1-01-PLAN.md — ExtractText + GFM parser + ToMarkdown (Wave 1)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 06.1-02-PLAN.md — CreateFromMarkdown + ImportMarkdown (Wave 2, depends on 06.1-01)

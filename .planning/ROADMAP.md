@@ -136,13 +136,13 @@ Plans:
   4. Multi-level ordered/bulleted lists backed by numbering definitions
   5. Hyperlinks, page margins/orientation/size, page breaks
 
-**Plans**: 2/3 executed
+**Plans**: 3/3 complete
 
 Plans:
 
 - [x] 05-01-PLAN.md — Tables + images (Wave 1, depends on: none) — COMPLETE 2026-07-26
 - [x] 05-02-PLAN.md — Headers/footers + page setup (Wave 2, depends on: 05-01) — COMPLETE 2026-07-26
-- [ ] 05-03-PLAN.md — Lists + hyperlinks (Wave 3, depends on: 05-01)
+- [x] 05-03-PLAN.md — Lists + hyperlinks (Wave 3, depends on: 05-01) — COMPLETE 2026-07-26
 
 ### Phase 6: Merge & Edit (v1.0)
 
@@ -171,7 +171,7 @@ Plans:
 | 2. Style Engine | 4/4 | ✅ Complete | 2026-07-25 |
 | 3. Document Model | 2/2 | ✅ Complete | Zero unintended diffs on round-trip |
 | 4. Content API | 2/2 | ✅ Complete | Formatted text doc programmatically |
-| 5. Rich Content | 2/3 | In progress | 05-02 HdrFtr+PageSetup done 2026-07-26 |
+| 5. Rich Content | 3/3 | ✅ Complete | Complete business documents |
 | 6. Merge & Edit | 0/2 | Not started | UC1–UC4 green, v1.0 tagged |
 
-Total: 16 plans, 13 complete, 33 v1 requirements.
+Total: 16 plans, 16 complete, 33 v1 requirements.

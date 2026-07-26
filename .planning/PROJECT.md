@@ -21,18 +21,17 @@ Create styled .docx documents in Go — from a template or from scratch — that
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] OPC package layer (ZIP + content types + relationships + namespace registry) — Phase 1
+- [x] WML schema types (~60 essential WordprocessingML structs) — Phase 1
+- [x] Blank document creation with professional defaults — Phase 1
+- [x] STYLE-CLONE: template style dependency graph copy — Phase 2
+- [x] STYLE-RESOLVE: effective property resolution — Phase 2
+- [x] STYLE-ROUNDTRIP: edit + save with zero unintended changes — Phase 3
+- [x] Content API: paragraphs, runs, formatting, named styles — Phase 4
+- [x] Rich content: tables, images, headers/footers, lists, hyperlinks, page setup — Phase 5
 
 ### Active
 
-- [ ] OPC package layer (ZIP + content types + relationships + namespace registry)
-- [ ] WML schema types (~60 essential WordprocessingML structs)
-- [ ] Blank document creation with professional defaults
-- [ ] STYLE-CLONE: template style dependency graph copy (styles + numbering + fontTable + theme + settings)
-- [ ] STYLE-RESOLVE: effective property resolution through basedOn chain, theme colors, numbering
-- [ ] STYLE-ROUNDTRIP: edit + save with zero unintended formatting changes
-- [ ] Content API: paragraphs, runs, formatting, named styles
-- [ ] Rich content: tables, images, headers/footers, lists, hyperlinks, page setup
 - [ ] {{placeholder}} template merge (including split-run placeholders)
 - [ ] Edit operations: insert/delete paragraphs and rows, replace run text
 
@@ -87,4 +86,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-25 after PRD rewrite*
+*Last updated: 2026-07-26 after Phase 5 completion*

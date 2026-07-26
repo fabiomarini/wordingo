@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 04
-current_phase_name: content-api
-status: completed
-stopped_at: Phase 5 context gathered
-last_updated: "2026-07-26T09:28:05.584Z"
+current_phase: 05
+current_phase_name: rich-content
+status: executing
+stopped_at: Phase 5 execution started
+last_updated: "2026-07-26T11:05:00Z"
 last_activity: 2026-07-26
-last_activity_desc: Phase 04 execution started
+last_activity_desc: Completed 05-01 Tables+Images
 progress:
   total_phases: 6
   completed_phases: 4
-  total_plans: 11
-  completed_plans: 11
-  percent: 67
+  total_plans: 14
+  completed_plans: 12
+  percent: 86
 ---
 
 # Project State
@@ -25,23 +25,23 @@ See: .planning/PROJECT.md (updated 2026-07-25)
 PRD: .planning/PRD.md (authoritative, 2026-07-25)
 
 **Core value:** Create styled .docx documents in Go — from a template or from scratch — that open in Word looking exactly as designed.
-**Current focus:** Phase 04 — content-api
+**Current focus:** Phase 05 — rich-content
 
 ## Current Position
 
-Phase: 04 (content-api) — EXECUTING
-Plans: 4 of 4
-Last activity: 2026-07-26 — Phase 04 execution started
+Phase: 05 (rich-content) — EXECUTING
+Plans: 1 of 4 complete (05-01 ✓)
+Last activity: 2026-07-26 — Completed 05-01 Tables+Images
 
-Progress: [███░░░░░░░] 33%
+Progress: [█████████░] 86%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 11 (Phase 1: 3, Phase 2: 4, Phase 3: 2, Phase 4: 2)
-- Average duration: 12 min/plan
-- Total execution time: ~110 min
+- Total plans completed: 12 (Phase 1: 3, Phase 2: 4, Phase 3: 2, Phase 4: 2, Phase 5: 1)
+- Average duration: 14 min/plan
+- Total execution time: ~155 min
 
 ## Accumulated Context
 
@@ -68,6 +68,10 @@ See PROJECT.md Key Decisions table.
 - [Phase 02-02]: Token-scan approach for theme1.xml (avoids full DrawingML parse)
 - [Phase 02-02]: Shade applied first, then tint (Pitfall 5 — Word's observed order)
 - [Phase 02-03]: CloneStyles is byte pass-through (D-09), fresh-empty-target only (D-08)
+- [Phase 05-01]: Tables append after all paragraphs (D-24 v1 limitation)
+- [Phase 05-01]: Image auto-size at 3in default width, DPI-aware when JFIF/pHYs available
+- [Phase 05-01]: nextImageID/nextHeaderID/nextFooterID init to 1 (no rel scan in v1)
+- [Phase 05-01]: CT_Anchor defined as placeholder with RawXML hoarding
 
 ### Pending Todos
 
@@ -90,7 +94,7 @@ None currently — Phase 4 content API complete and verified
 
 **Resume file:** .planning/phases/05-rich-content/05-CONTEXT.md
 
-**Last session:** 2026-07-26T09:28:05.578Z
-**Stopped at:** Phase 5 context gathered
+**Last session:** 2026-07-26T11:05:00Z
+**Stopped at:** Completed 05-01 Tables+Images
 
-Next: `/gsd-plan-phase 05` — plan Rich Content (tables, images, headers/footers, lists, hyperlinks, page setup)
+Next: Execute 05-02 (Headers/Footers) or 05-03 (Lists/Hyperlinks/PageSetup)

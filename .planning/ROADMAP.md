@@ -6,10 +6,10 @@ Six phases, each with a hard gate that proves the phase's thesis before proceedi
 
 ## Phases
 
-- [ ] **Phase 1: Foundation** — OPC package, WML types, blank document
+- [x] **Phase 1: Foundation** — OPC package, WML types, blank document
 - [x] **Phase 2: Style Engine** — STYLE-CLONE + STYLE-RESOLVE (completed 2026-07-25)
-- [ ] **Phase 3: Document Model** — open/read/save, STYLE-ROUNDTRIP, FromTemplate
-- [ ] **Phase 4: Content API** — paragraphs, runs, formatting, named styles
+- [x] **Phase 3: Document Model** — open/read/save, STYLE-ROUNDTRIP, FromTemplate
+- [x] **Phase 4: Content API** — paragraphs, runs, formatting, named styles
 - [ ] **Phase 5: Rich Content** — tables, images, headers/footers, lists, hyperlinks, page setup
 - [ ] **Phase 6: Merge & Edit** — {{placeholder}} merge, insert/delete, v1.0
 
@@ -95,11 +95,11 @@ Plans:
 
 **Wave 1**
 
-- [ ] 03-01: Document open/read/save — lazy loading (D-03), Paragraphs() (D-02), WriteTo/Save/Close (D-07), per-part round-trip diff (D-05)
+- [x] 03-01: Document open/read/save — lazy loading (D-03), Paragraphs() (D-02), WriteTo/Save/Close (D-07), per-part round-trip diff (D-05)
 
 **Wave 2** *(depends on 03-01 — needs parseDocument helper and Create() (*Document, error) refactor)*
 
-- [ ] 03-02: FromTemplate + OpenTemplate with CloneStyles (D-04, CREATE-03, CREATE-04)
+- [x] 03-02: FromTemplate + OpenTemplate with CloneStyles (D-04, CREATE-03, CREATE-04)
 
 ### Phase 4: Content API
 
@@ -108,20 +108,20 @@ Plans:
 **Requirements**: API-01..03, QUAL-01..03
 **Success Criteria**:
 
-  1. Paragraphs and runs with full inline formatting (bold, italic, underline, font, size, color, highlight)
-  2. Paragraph formatting (alignment, spacing, indentation)
-  3. Named styles applied by name and resolved through the style engine — output renders like template
-  4. io.ReaderAt/io.Writer I/O; errors not panics; Warnings() exposed
+   1. Paragraphs and runs with full inline formatting (bold, italic, underline, font, size, color, highlight)
+   2. Paragraph formatting (alignment, spacing, indentation)
+   3. Named styles applied by name and resolved through the style engine — output renders like template
+   4. io.ReaderAt/io.Writer I/O; errors not panics; Warnings() exposed
 
-**Plans**: 2 plans
+**Plans**: 2/2 plans complete
 
 **Wave 1**
 
-- [ ] 04-01: Paragraph/Run builders + inline + paragraph formatting (API-01, API-02, QUAL-02)
+- [x] 04-01: Paragraph/Run builders + inline + paragraph formatting (API-01, API-02, QUAL-02)
 
 **Wave 2** *(blocked on 04-01 — needs Paragraph/Run types)*
 
-- [ ] 04-02: Named style application + public API polish (API-03, QUAL-01, QUAL-03)
+- [x] 04-02: Named style application + public API polish (API-03, QUAL-01, QUAL-03)
 
 ### Phase 5: Rich Content
 
@@ -136,13 +136,13 @@ Plans:
   4. Multi-level ordered/bulleted lists backed by numbering definitions
   5. Hyperlinks, page margins/orientation/size, page breaks
 
-**Plans**: 3 plans
+**Plans**: 1/3 executed
 
 Plans:
 
-- [ ] 05-01: Tables + images
-- [ ] 05-02: Headers/footers + sections + page setup
-- [ ] 05-03: Lists + hyperlinks
+- [x] 05-01-PLAN.md — Tables + images (Wave 1, depends on: none) — COMPLETE 2026-07-26
+- [ ] 05-02-PLAN.md — Headers/footers + page setup (Wave 1, depends on: none)
+- [ ] 05-03-PLAN.md — Lists + hyperlinks (Wave 2, depends on: 05-01)
 
 ### Phase 6: Merge & Edit (v1.0)
 
@@ -169,9 +169,9 @@ Plans:
 |-------|----------------|--------|------|
 | 1. Foundation | 3/3 | ✅ Complete | Blank .docx opens in Word without repair |
 | 2. Style Engine | 4/4 | ✅ Complete | 2026-07-25 |
-| 3. Document Model | 0/2 | Not started | Zero unintended diffs on round-trip |
-| 4. Content API | 0/2 | Not started | Formatted text doc programmatically |
-| 5. Rich Content | 0/3 | Not started | Complete business document |
+| 3. Document Model | 2/2 | ✅ Complete | Zero unintended diffs on round-trip |
+| 4. Content API | 2/2 | ✅ Complete | Formatted text doc programmatically |
+| 5. Rich Content | 1/3 | In progress | 05-01 Tables+Images done 2026-07-26 |
 | 6. Merge & Edit | 0/2 | Not started | UC1–UC4 green, v1.0 tagged |
 
-Total: 16 plans, 7 complete, 33 v1 requirements.
+Total: 16 plans, 12 complete, 33 v1 requirements.

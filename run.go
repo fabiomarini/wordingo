@@ -2,6 +2,7 @@ package wordingo
 
 import (
 	"math"
+	"strings"
 
 	"github.com/fabiomarini/wordingo/internal/wml"
 )
@@ -138,6 +139,31 @@ func (r *Run) SetStyle(name string) *Run {
 		r.ct.RPr = &wml.CT_RPr{}
 	}
 	r.ct.RPr.RStyle = &wml.CT_RStyle{Val: &name}
+	r.para.doc.dirty = true
+	return r
+}
+
+func (r *Run) SetText(s string) *Run {
+	if r == nil {
+		panic("wordingo: SetText called on nil Run")
+	}
+	if r.ct.T == nil {
+		r.ct.T = &wml.CT_Text{Value: s}
+	} else {
+		r.ct.T.Value = s
+	}
+	r.para.doc.dirty = true
+	return r
+}
+
+func (r *Run) ReplaceText(old, new string) *Run {
+	if r == nil {
+		panic("wordingo: ReplaceText called on nil Run")
+	}
+	if r.ct.T == nil {
+		return r
+	}
+	r.ct.T.Value = strings.ReplaceAll(r.ct.T.Value, old, new)
 	r.para.doc.dirty = true
 	return r
 }

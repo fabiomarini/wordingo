@@ -3,18 +3,18 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 current_phase: 06.1
-status: Planning complete
-stopped_at: Phase 06.1 plans created
-last_updated: "2026-07-26T16:00:00.000Z"
+current_phase_name: add-new-api-to-extract-the-content-of-the-document-as-text-a
+status: Complete
+stopped_at: Phase 06.1 complete
+last_updated: "2026-07-26T17:00:00.000Z"
 last_activity: 2026-07-26
-last_activity_desc: Phase 6 merge+edit implementation, validation, and v0.1.0 tag
+last_activity_desc: Phase 06.1 execution complete
 progress:
   total_phases: 7
   completed_phases: 6
-  total_plans: 16
-  completed_plans: 16
-  percent: 86
-current_phase_name: merge-edit-v1-0
+  total_plans: 18
+  completed_plans: 18
+  percent: 100
 ---
 
 # Project State
@@ -25,13 +25,13 @@ See: .planning/PROJECT.md (updated 2026-07-25)
 PRD: .planning/PRD.md (authoritative, 2026-07-25)
 
 **Core value:** Create styled .docx documents in Go — from a template or from scratch — that open in Word looking exactly as designed.
-**Current focus:** Phase 6 — merge-edit-v1-0
+**Current focus:** Phase 06.1 — add-new-api-to-extract-the-content-of-the-document-as-text-a
 
 ## Current Position
 
-Phase: 6 — COMPLETE
-Plans: 16 of 16 complete
-Last activity: 2026-07-26 — Phase 6 merge+edit implementation, validation, and v0.1.0 tag
+Phase: 06.1 — COMPLETE
+Plans: 18 of 18 complete
+Last activity: 2026-07-26 — Phase 06.1 execution complete
 
 Progress: [██████████] 100%
 
@@ -39,9 +39,9 @@ Progress: [██████████] 100%
 
 **Velocity:**
 
-- Total plans completed: 16 (Phase 1: 3, Phase 2: 4, Phase 3: 2, Phase 4: 2, Phase 5: 3, Phase 6: 2)
+- Total plans completed: 18 (Phase 1: 3, Phase 2: 4, Phase 3: 2, Phase 4: 2, Phase 5: 3, Phase 6: 2, Phase 06.1: 2)
 - Average duration: ~13 min/plan
-- Total execution time: ~184 min
+- Total execution time: ~210 min
 
 ## Accumulated Context
 

@@ -4,21 +4,22 @@
 //
 // Cloner (this file)
 //
-//   CloneStyles byte-copies the 5 style dependency-graph parts (styles.xml,
-//   numbering.xml, fontTable.xml, theme/theme1.xml, settings.xml) from a
-//   source *opc.Package into a fresh-empty target *opc.Package, allocates
-//   fresh relationship ids, and registers content-type Overrides.
+// CloneStyles byte-copies the 7 style dependency-graph parts (styles.xml,
+// numbering.xml, fontTable.xml, theme/theme1.xml, settings.xml,
+// footnotes.xml, endnotes.xml) from a source *opc.Package into a
+// fresh-empty target *opc.Package, allocates fresh relationship ids,
+// and registers content-type Overrides.
 //
-//   D-08  Fresh-empty-target only.  If the target already has any of the 5
-//         style parts, CloneStyles returns ErrCloneTargetNotEmpty.  Merge-
-//         by-styleId is deferred to a future phase — no partial-merge story
-//         in v1.
+// D-08  Fresh-empty-target only.  If the target already has any of the
+//         7 style parts, CloneStyles returns ErrCloneTargetNotEmpty.
+//         Merge-by-styleId is deferred to a future phase — no partial-
+//         merge story in v1.
 //
-//   D-09  All 5 parts are treated as raw bytes via opc.MarkModified
+//   D-09  All 7 parts are treated as raw bytes via opc.MarkModified
 //         pass-through — no re-parse, no wml/xmlutil decode.  Invalid
 //         source XML surfaces at resolve time (D-07), not at clone time.
 //
-//   The 5 OOXML relationship type URIs and content-type MIMEs below are
+//   The 7 OOXML relationship type URIs and content-type MIMEs below are
 //   defined by ISO/IEC 29500-1 §15 (Package Relationships).
 //
 //   This file reuses Phase 1 opc primitives only (MarkModified, NextRID,
@@ -45,14 +46,14 @@ import (
 	"github.com/fabiomarini/wordingo/internal/opc"
 )
 
-// cloneParts is the constant table of the 5 style dependency-graph parts.
+// cloneParts is the constant table of the 7 style dependency-graph parts.
 //
 // Each entry carries the package-relative part name (no leading slash),
 // the canonical OOXML relationship type URI (ISO/IEC 29500-1 §15), and
 // the content-type MIME string for the [Content_Types].xml Override entry.
 //
-// Order: styles, numbering, fontTable, theme, settings — all present parts
-// are processed in this order.
+// Order: styles, numbering, fontTable, theme, settings, footnotes, endnotes
+// — all present parts are processed in this order.
 var cloneParts = []struct {
 	name    string // package-relative part name, e.g. "word/styles.xml"
 	relType string // relationship type URI for word/_rels/document.xml.rels
@@ -83,16 +84,26 @@ var cloneParts = []struct {
 		relType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings",
 		ct:      "application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml",
 	},
+	{
+		name:    "word/footnotes.xml",
+		relType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/footnotes",
+		ct:      "application/vnd.openxmlformats-officedocument.wordprocessingml.footnotes+xml",
+	},
+	{
+		name:    "word/endnotes.xml",
+		relType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/endnotes",
+		ct:      "application/vnd.openxmlformats-officedocument.wordprocessingml.endnotes+xml",
+	},
 }
 
-// CloneStyles copies the 5 style dependency-graph parts from src into dst.
+// CloneStyles copies the 7 style dependency-graph parts from src into dst.
 //
 // The algorithm has three steps:
 //
 // Step 1 — Precondition scan (atomicity, D-08):
 //
 //	Iterate cloneParts and check dst.Parts[p.name] for each.  If any of
-//	the 5 parts already exists in dst, return ErrCloneTargetNotEmpty
+//	the 7 parts already exists in dst, return ErrCloneTargetNotEmpty
 //	IMMEDIATELY — no byte copy, no relationship added, no content-type
 //	set.  The full scan completes before any write to dst.
 //
@@ -124,7 +135,7 @@ func CloneStyles(src, dst *opc.Package) error {
 	}
 
 	// Step 1 — Precondition scan (atomicity, D-08).
-	// Check ALL 5 parts before any byte copy.
+	// Check ALL 7 parts before any byte copy.
 	for _, p := range cloneParts {
 		if _, exists := dst.Parts[p.name]; exists {
 			return fmt.Errorf("style: clone %s: %w", p.name, ErrCloneTargetNotEmpty)

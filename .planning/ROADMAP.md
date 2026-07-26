@@ -177,8 +177,9 @@ Plans:
 | 4. Content API | 2/2 | ✅ Complete | Formatted text doc programmatically |
 | 5. Rich Content | 3/3 | Complete    | 2026-07-26 |
 | 6. Merge & Edit | 2/2 | Complete   | 2026-07-26 |  |
+| 06.1 Text Extract & Markdown | 2/2 | ✅ Complete | 2026-07-26 |  |
 
-Total: 16 plans, 16 complete, 33 v1 requirements.
+Total: 18 plans, 18 complete, 37 v1 requirements.
 
 ### Phase 06.1: Text Extraction & Markdown Conversion (INSERTED)
 
@@ -190,8 +191,10 @@ Total: 16 plans, 16 complete, 33 v1 requirements.
 Plans:
 **Wave 1**
 
-- [ ] 06.1-01-PLAN.md — ExtractText + GFM parser + ToMarkdown (Wave 1)
+- [x] 06.1-01-PLAN.md — ExtractText + GFM parser + ToMarkdown (Wave 1)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 06.1-02-PLAN.md — CreateFromMarkdown + ImportMarkdown (Wave 2, depends on 06.1-01)
+- [x] 06.1-02-PLAN.md — CreateFromMarkdown + ImportMarkdown (Wave 2, depends on 06.1-01)
+
+**Status:** ✅ Complete — Phase 06.1 complete (2026-07-26)

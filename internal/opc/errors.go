@@ -21,9 +21,7 @@ var (
 	// ErrTooManyParts marks a package with more than MaxParts entries.
 	ErrTooManyParts = errors.New("opc: too many parts")
 
-	// ErrXMLDepth marks XML nesting beyond the safety cap. Enforced by
-	// internal/xmlutil; declared here so the taxonomy lives in one place.
-	ErrXMLDepth = errors.New("opc: xml depth limit exceeded")
+	// ErrXMLDepth is defined and enforced by internal/xmlutil.
 )
 
 // Safety limits (OPC-07). Values per 01-RESEARCH.md §Safety Limits.

@@ -46,6 +46,11 @@ type Part struct {
 	deleted  bool
 }
 
+// IsModified reports whether this part's payload was replaced
+// since open. Used by the style engine to identify newly assembled
+// parts that should be serialised rather than raw-copied.
+func (p *Part) IsModified() bool { return p.modified }
+
 // Open returns a ReadCloser over the part payload, capped at
 // MaxPartBytes. Reads beyond the cap yield ErrDecompressionLimit.
 func (p *Part) Open() (io.ReadCloser, error) {

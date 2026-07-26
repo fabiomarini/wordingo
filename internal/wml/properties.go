@@ -164,4 +164,10 @@ type CT_Kern struct {
 	Val     *int64   `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main val,attr,omitempty"`
 }
 
+// CT_OutlineLvl is heading outline level (w:outlineLvl).
+// No XMLName — field tag on CT_PPr provides element name.
+type CT_OutlineLvl struct {
+	Val *int64 `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main val,attr,omitempty"`
+}
+
 

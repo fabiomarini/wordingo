@@ -9,6 +9,14 @@ import (
 	"github.com/fabiomarini/wordingo/internal/xmlutil"
 )
 
+// ParagraphContainer is the interface for editing paragraphs in a
+// container that owns a paragraph slice (body, header, or footer).
+type ParagraphContainer interface {
+	Paragraphs() []*Paragraph
+	InsertParagraphAt(idx int, ct *wml.CT_P) *Paragraph
+	DeleteParagraphAt(idx int)
+}
+
 // Header wraps a WordprocessingML header part (w:hdr).
 type Header struct {
 	ct       *wml.CT_Hdr
@@ -37,6 +45,36 @@ func (f *Footer) X() *wml.CT_Ftr {
 		panic("wordingo: X called on nil Footer")
 	}
 	return f.ct
+}
+
+func (h *Header) Paragraphs() []*Paragraph {
+	if h == nil {
+		panic("wordingo: Paragraphs called on nil Header")
+	}
+	paras := make([]*Paragraph, len(h.ct.P))
+	for i, p := range h.ct.P {
+		paras[i] = &Paragraph{ct: p, doc: h.doc}
+	}
+	return paras
+}
+
+func (h *Header) InsertParagraphAt(idx int, ct *wml.CT_P) *Paragraph {
+	if h == nil {
+		panic("wordingo: InsertParagraphAt called on nil Header")
+	}
+	h.ct.P = append(h.ct.P, nil)
+	copy(h.ct.P[idx+1:], h.ct.P[idx:])
+	h.ct.P[idx] = ct
+	h.sync()
+	return &Paragraph{ct: ct, doc: h.doc}
+}
+
+func (h *Header) DeleteParagraphAt(idx int) {
+	if h == nil {
+		panic("wordingo: DeleteParagraphAt called on nil Header")
+	}
+	h.ct.P = append(h.ct.P[:idx], h.ct.P[idx+1:]...)
+	h.sync()
 }
 
 func (h *Header) sync() {
@@ -70,6 +108,36 @@ func (h *Header) AddParagraph(text string) *Paragraph {
 	h.ct.P = append(h.ct.P, ct)
 	h.sync()
 	return &Paragraph{ct: ct, doc: h.doc}
+}
+
+func (f *Footer) Paragraphs() []*Paragraph {
+	if f == nil {
+		panic("wordingo: Paragraphs called on nil Footer")
+	}
+	paras := make([]*Paragraph, len(f.ct.P))
+	for i, p := range f.ct.P {
+		paras[i] = &Paragraph{ct: p, doc: f.doc}
+	}
+	return paras
+}
+
+func (f *Footer) InsertParagraphAt(idx int, ct *wml.CT_P) *Paragraph {
+	if f == nil {
+		panic("wordingo: InsertParagraphAt called on nil Footer")
+	}
+	f.ct.P = append(f.ct.P, nil)
+	copy(f.ct.P[idx+1:], f.ct.P[idx:])
+	f.ct.P[idx] = ct
+	f.sync()
+	return &Paragraph{ct: ct, doc: f.doc}
+}
+
+func (f *Footer) DeleteParagraphAt(idx int) {
+	if f == nil {
+		panic("wordingo: DeleteParagraphAt called on nil Footer")
+	}
+	f.ct.P = append(f.ct.P[:idx], f.ct.P[idx+1:]...)
+	f.sync()
 }
 
 func (f *Footer) sync() {

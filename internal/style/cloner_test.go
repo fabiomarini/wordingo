@@ -19,7 +19,7 @@ import (
 const clonerStylesNS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 const clonerRelsNS = "http://schemas.openxmlformats.org/package/2006/relationships"
 
-// buildBaseContentTypes returns [Content_Types].xml with all 5 style parts
+// buildBaseContentTypes returns [Content_Types].xml with all 7 style parts
 // as Overrides plus a Default for xml/rels.
 func buildBaseContentTypes(extra ...string) string {
 	ct := `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -31,7 +31,9 @@ func buildBaseContentTypes(extra ...string) string {
 <Override PartName="/word/numbering.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.numbering+xml"/>
 <Override PartName="/word/fontTable.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.fontTable+xml"/>
 <Override PartName="/word/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/>
-<Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/>`
+<Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/>
+<Override PartName="/word/footnotes.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footnotes+xml"/>
+<Override PartName="/word/endnotes.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.endnotes+xml"/>`
 	for _, e := range extra {
 		ct += e
 	}
@@ -45,8 +47,10 @@ var (
 	synNumberingXML = []byte(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:numbering xmlns:w="` + clonerStylesNS + `"><w:abstractNum w:abstractNumId="0"><w:lvl w:ilvl="0"><w:numFmt w:val="decimal"/><w:lvlText w:val="%1."/><w:start w:val="1"/></w:lvl></w:abstractNum><w:num w:numId="1"><w:abstractNumId w:val="0"/></w:num></w:numbering>`)
 	synFontTableXML = []byte(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:fonts xmlns:w="` + clonerStylesNS + `"><w:font w:name="Aptos"><w:family w:val="swiss"/></w:font></w:fonts>`)
 	synThemeXML     = []byte(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="Test"><a:themeElements><a:clrScheme name="Test"><a:dk1><a:sysClr val="windowText" lastClr="000000"/></a:dk1><a:lt1><a:sysClr val="window" lastClr="FFFFFF"/></a:lt1><a:accent1><a:srgbClr val="156082"/></a:accent1></a:clrScheme></a:themeElements></a:theme>`)
-	synSettingsXML  = []byte(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:settings xmlns:w="` + clonerStylesNS + `"><w:zoom w:percent="100"/></w:settings>`)
-	synDocumentXML  = []byte(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="` + clonerStylesNS + `"><w:body><w:p/></w:body></w:document>`)
+	synSettingsXML   = []byte(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:settings xmlns:w="` + clonerStylesNS + `"><w:zoom w:percent="100"/></w:settings>`)
+	synFootnotesXML  = []byte(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:footnotes xmlns:w="` + clonerStylesNS + `"><w:footnote w:type="separator" w:id="-1"><w:p><w:r><w:separator/></w:r></w:p></w:footnote><w:footnote w:type="continuationSeparator" w:id="0"><w:p><w:r><w:continuationSeparator/></w:r></w:p></w:footnote></w:footnotes>`)
+	synEndnotesXML   = []byte(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:endnotes xmlns:w="` + clonerStylesNS + `"><w:endnote w:type="separator" w:id="-1"><w:p><w:r><w:separator/></w:r></w:p></w:endnote><w:endnote w:type="continuationSeparator" w:id="0"><w:p><w:r><w:continuationSeparator/></w:r></w:p></w:endnote></w:endnotes>`)
+	synDocumentXML   = []byte(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="` + clonerStylesNS + `"><w:body><w:p/></w:body></w:document>`)
 )
 
 // addZipEntry is a helper to add a single entry to a zip.Writer with
@@ -64,7 +68,7 @@ func addZipEntry(t *testing.T, zw *zip.Writer, name string, payload []byte) {
 	}
 }
 
-// buildSourceZip returns a ZIP with all 5 style parts plus minimal
+// buildSourceZip returns a ZIP with all 7 style parts plus minimal
 // package infrastructure. If excludeNumbering is true, numbering.xml
 // is omitted.
 func buildSourceZip(t *testing.T, excludeNumbering bool) []byte {
@@ -82,12 +86,16 @@ func buildSourceZip(t *testing.T, excludeNumbering bool) []byte {
 	addZipEntry(t, zw, "word/_rels/document.xml.rels", []byte(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="`+clonerRelsNS+`">
 <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footnotes" Target="footnotes.xml"/>
+<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/endnotes" Target="endnotes.xml"/>
 </Relationships>`))
 
 	addZipEntry(t, zw, "word/styles.xml", synStylesXML)
 	addZipEntry(t, zw, "word/fontTable.xml", synFontTableXML)
 	addZipEntry(t, zw, "word/theme/theme1.xml", synThemeXML)
 	addZipEntry(t, zw, "word/settings.xml", synSettingsXML)
+	addZipEntry(t, zw, "word/footnotes.xml", synFootnotesXML)
+	addZipEntry(t, zw, "word/endnotes.xml", synEndnotesXML)
 
 	if !excludeNumbering {
 		addZipEntry(t, zw, "word/numbering.xml", synNumberingXML)
@@ -250,7 +258,7 @@ func TestCloneStyles_FreshEmptyTarget(t *testing.T) {
 		t.Fatalf("CloneStyles: %v", err)
 	}
 
-	// All 5 parts must be present in dst.
+	// All 7 parts must be present in dst.
 	for _, p := range cloneParts {
 		if !partExists(dst, p.name) {
 			t.Errorf("part %q missing from dst after clone", p.name)
@@ -347,11 +355,11 @@ func TestCloneStyles_RelationshipAllocation(t *testing.T) {
 		t.Fatal("dst.Rels[\"word/document.xml\"] is nil")
 	}
 
-	// Must have at least 5 entries (the pre-existing rId1 from the
-	// source relationship to styles, plus 5 new ones from cloning).
-	// Fresh target starts with 0 rels, so we expect exactly 5.
-	if len(docRels.Rels) != 5 {
-		t.Fatalf("expected 5 document rels after clone, got %d", len(docRels.Rels))
+	// Fresh target starts with 0 rels. CloneStyles adds 1 per cloned
+	// part present in source (styles, numbering, fontTable, theme,
+	// settings, footnotes, endnotes = 7).
+	if len(docRels.Rels) != 7 {
+		t.Fatalf("expected 7 document rels after clone, got %d", len(docRels.Rels))
 	}
 
 	// All rIds must be unique and follow rId<N> format.
@@ -496,8 +504,8 @@ func TestCloneStyles_RealFixtures(t *testing.T) {
 
 // Verify cloneParts table exists (compile-time check via reference).
 func TestClonePartsTable_Exists(t *testing.T) {
-	if len(cloneParts) != 5 {
-		t.Fatalf("cloneParts has %d entries, want 5", len(cloneParts))
+	if len(cloneParts) != 7 {
+		t.Fatalf("cloneParts has %d entries, want 7", len(cloneParts))
 	}
 	expected := []struct{ name string }{
 		{"word/styles.xml"},
@@ -505,6 +513,8 @@ func TestClonePartsTable_Exists(t *testing.T) {
 		{"word/fontTable.xml"},
 		{"word/theme/theme1.xml"},
 		{"word/settings.xml"},
+		{"word/footnotes.xml"},
+		{"word/endnotes.xml"},
 	}
 	for i, e := range expected {
 		if cloneParts[i].name != e.name {

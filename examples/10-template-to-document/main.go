@@ -37,13 +37,13 @@ func main() {
 	}
 	defer doc1.Close()
 
-	doc1.AddParagraph("Q3 Financial Report").SetStyle("Titolo")
-	doc1.AddParagraph("Prepared by the Finance Team").SetStyle("Sottotitolo")
+	doc1.AddParagraph("Q3 Financial Report").SetStyle("Title")
+	doc1.AddParagraph("Prepared by the Finance Team").SetStyle("Subtitle")
 
-	doc1.AddParagraph("Executive Summary").SetStyle("Titolo1")
+	doc1.AddParagraph("Executive Summary").SetStyle("Heading1")
 	doc1.AddParagraph("Revenue grew 23% year-over-year driven by strong performance in the Enterprise and SMB segments. Operating margins improved to 18.5%.")
 
-	doc1.AddParagraph("Key Metrics").SetStyle("Titolo1")
+	doc1.AddParagraph("Key Metrics").SetStyle("Heading1")
 	doc1.AddTable([][]string{
 		{"Metric", "Q3 2025", "Q3 2026", "Change"},
 		{"Revenue", "$4.2M", "$5.2M", "+23%"},
@@ -52,7 +52,7 @@ func main() {
 		{"Active Customers", "1,240", "1,580", "+27%"},
 	})
 
-	doc1.AddParagraph("Regional Breakdown").SetStyle("Titolo2")
+	doc1.AddParagraph("Regional Breakdown").SetStyle("Heading2")
 	doc1.AddParagraph("North America contributed 52% of revenue (up from 48%), EMEA 30%, and APAC 18%.")
 
 	out1 := outputPath("from-template-report.docx")
@@ -81,7 +81,7 @@ func main() {
 		fmt.Printf("    [%d] style=%q text=%q\n", i, p.Style(), truncate(p.Text(), 60))
 	}
 
-	doc2.AddParagraph("Appendix: Updated Projections").SetStyle("Titolo1")
+	doc2.AddParagraph("Appendix: Updated Projections").SetStyle("Heading1")
 
 	doc2.AddParagraph("Following the quarterly review, forward guidance has been revised upward. Projected Q4 revenue is $5.5M with full-year 2026 revenue of $20M.")
 
@@ -119,10 +119,10 @@ func main() {
 	h := doc3.AddHeader(wordingo.HeaderDefault)
 	h.AddParagraph("Invoice {{invoice_id}}")
 
-	doc3.AddParagraph("Invoice").SetStyle("Titolo")
-	doc3.AddParagraph("Bill To: {{customer_name}}").SetStyle("Sottotitolo")
+	doc3.AddParagraph("Invoice").SetStyle("Title")
+	doc3.AddParagraph("Bill To: {{customer_name}}").SetStyle("Subtitle")
 
-	doc3.AddParagraph("Items").SetStyle("Titolo1")
+	doc3.AddParagraph("Items").SetStyle("Heading1")
 	doc3.AddTable([][]string{
 		{"#", "Description", "Qty", "Unit Price", "Total"},
 		{"1", "{{item_1}}", "{{qty_1}}", "{{price_1}}", "{{line_1}}"},

@@ -2,7 +2,7 @@
 
 ## What it demonstrates
 
-Every major v1 feature in a single document: header/footer, paper size, `Title`/`Subtitle`/`Heading1`-style paragraphs (with the same Italian-ID caveat as Example 02), inline run formatting, simple grid + fluent builder tables with shading, an embedded PNG image, bulleted + ordered lists, an inline hyperlink, a page break, and a landscape-configured section.
+Every major v1 feature in a single document: header/footer, paper size, `Title`/`Subtitle`/`Heading1`-style paragraphs, inline run formatting, simple grid + fluent builder tables with shading, an embedded PNG image, bulleted + ordered lists, an inline hyperlink, a page break, and a landscape-configured section.
 
 ## How to run
 
@@ -19,7 +19,7 @@ go run main.go
 
 - `doc.AddHeader(wordingo.HeaderDefault).AddParagraph("Wordingo Demo Document — Header")` and `doc.AddFooter(wordingo.FooterDefault).AddParagraph("Page ")` — header/footer OPC parts created lazily on first call, then populated.
 - `doc.SetPaperSize(wordingo.PaperLetterW, wordingo.PaperLetterH)` — explicit Letter paper size; this matches the default but pins it.
-- `doc.AddParagraph("Wordingo: Pure Go Word Documents").SetStyle("Title")` (and `Subtitle`, `Heading1`, `Heading2`) — these English style IDs are not in the default `styles.xml`, so they produce non-fatal `Warnings()` but still open in Word. To suppress warnings, build the document from a template whose `styles.xml` defines them.
+- `doc.AddParagraph("Wordingo: Pure Go Word Documents").SetStyle("Title")` (and `Subtitle`, `Heading1`, `Heading2`) — named style IDs matching the default blank document's style table.
 - `p := doc.AddParagraph("Inline formatting: "); p.AddRun("bold").SetBold(true); p.AddRun(", "); p.AddRun("italic").SetItalic(true); ...` — multiple runs with chained formatting in one paragraph (`SetBold`, `SetItalic`, `SetUnderline`, `SetColor`, `SetFont`, `SetSize`).
 - `tbl := doc.AddTableBuilder(); tbl.SetTableStyle("LightGridAccent1"); tbl.SetWidth(8000, "dxa"); tbl.SetBorders(&wordingo.TableBorders{...})` then `tbl.Row(0).Cell(0).SetText("Item").SetBold(true).SetWidth(2500, "dxa").SetShading("", "D9E2F3")` — builder table with table-level style/width/borders and per-cell bold/width/shading.
 - `run, err := doc.AddImageBytes("gradient.png", imgData, "image/png"); run.SetImageWidth(2.5).SetImageHeight(2.5)` — 100×100 gradient PNG embedded as DrawingML inline, sized 2.5×2.5 inches via the returned `*Run`.

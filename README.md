@@ -48,7 +48,7 @@ func main() {
     if err != nil { log.Fatal(err) }
     defer doc.Close()
 
-    doc.AddParagraph("The Art of Go").SetStyle("Titolo")
+    doc.AddParagraph("The Art of Go").SetStyle("Title")
     p := doc.AddParagraph("Go is statically typed, compiled, and fast.")
     p.AddRun(" Fast.").SetBold(true).SetColor("2E75B6")
 
@@ -91,7 +91,7 @@ doc, _ := wordingo.OpenTemplate("letterhead.docx")
 ### Write paragraphs and style text
 
 ```go
-p := doc.AddParagraph("Chapter 1").SetStyle("Titolo1")
+p := doc.AddParagraph("Chapter 1").SetStyle("Heading1")
 p.AddRun(" — A thrilling start.")
 r := p.AddRun("Bold and blue").SetBold(true).SetColor("2E75B6")
 r.ReplaceText("blue", "red")
@@ -101,14 +101,12 @@ Paragraph methods: `SetAlignment`, `SetSpacing`, `SetIndent`, `SetPageBreakBefor
 
 ### Style names
 
-Blank documents come with default styles. Style IDs like `"Titolo"`, `"Titolo1"`–`"Titolo9"`, `"Normale"`, `"Sottotitolo"` are available out of the box. Set them on paragraphs and runs:
+Blank documents include a full set of default styles. Available style IDs include `"Title"`, `"Subtitle"`, `"Heading1"`–`"Heading9"`, `"Normal"`, `"Quote"`, `"IntenseEmphasis"`, `"IntenseReference"`, `"ListParagraph"`, and character-style variants.
 
 ```go
-doc.AddParagraph("Welcome").SetStyle("Titolo")
-p.AddRun("important").SetStyle("Enfasiintensa")
+doc.AddParagraph("Welcome").SetStyle("Title")
+p.AddRun("important").SetStyle("IntenseEmphasis")
 ```
-
-If you prefer English names (`"Title"`, `"Heading1"`), use `FromTemplate` with a template that defines them. Unknown style names produce warnings, not errors — the file still opens fine in Word.
 
 ### Create tables
 

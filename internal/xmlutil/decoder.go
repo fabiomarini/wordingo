@@ -1,6 +1,7 @@
 package xmlutil
 
 import (
+	"bytes"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -31,10 +32,9 @@ type SafeDecoder struct {
 }
 
 // NewSafeDecoder returns a SafeDecoder configured with Strict=true,
-// Entity=nil, and an io.LimitReader cap.  The caller should reject
-// DOCTYPE tokens via RejectDirective.
+// Entity=nil, an io.LimitReader cap, and DOCTYPE rejection.
 func NewSafeDecoder(r io.Reader, maxBytes int64) *SafeDecoder {
-	d := xml.NewDecoder(io.LimitReader(r, maxBytes))
+	d := xml.NewDecoder(&docTypeFilter{r: io.LimitReader(r, maxBytes)})
 	d.Strict = true
 	d.Entity = nil
 	return &SafeDecoder{Decoder: d}
@@ -74,6 +74,47 @@ func (d *SafeDecoder) trackDepth(tok xml.Token) {
 			d.depth--
 		}
 	}
+}
+
+// docTypeFilter wraps io.Reader and rejects any input containing
+// a DOCTYPE declaration. Scans the first read buffer for `<!DOCTYPE`.
+// The check is case-insensitive and only applies to the first 8KB.
+type docTypeFilter struct {
+	r       io.Reader
+	buf     []byte
+	checked bool
+}
+
+func (f *docTypeFilter) Read(p []byte) (int, error) {
+	if !f.checked {
+		tmp := make([]byte, len(p))
+		n, err := f.r.Read(tmp)
+		if n > 0 {
+			f.buf = append(f.buf, tmp[:n]...)
+			upper := make([]byte, len(f.buf))
+			for i, b := range f.buf {
+				if b >= 'a' && b <= 'z' {
+					upper[i] = b - 32
+				} else {
+					upper[i] = b
+				}
+			}
+			if bytes.Contains(upper, []byte("<!DOCTYPE")) {
+				return 0, fmt.Errorf("%w: DOCTYPE declaration rejected in input stream", ErrDOCTYPE)
+			}
+		}
+		f.checked = true
+		if err != nil {
+			n = copy(p, f.buf)
+			return n, err
+		}
+	}
+	if len(f.buf) > 0 {
+		n := copy(p, f.buf)
+		f.buf = f.buf[n:]
+		return n, nil
+	}
+	return f.r.Read(p)
 }
 
 // RejectDirective returns ErrDOCTYPE if tok is an xml.Directive

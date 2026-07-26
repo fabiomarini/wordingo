@@ -32,27 +32,27 @@ Three distinct operations, explicitly separated. Do not conflate.
 - [x] **STYLE-RESOLVE-01**: Resolve effective paragraph properties through the full chain: docDefaults → latentStyles → basedOn chain → direct formatting
 - [x] **STYLE-RESOLVE-02**: Resolve effective run properties through the full chain, including run styles
 - [x] **STYLE-RESOLVE-03**: Resolve theme colors and numbering definitions; detect circular basedOn references
-- [ ] **STYLE-ROUNDTRIP-01**: Editing a document never rewrites style parts unless user explicitly modifies styles
-- [ ] **STYLE-ROUNDTRIP-02**: Unmodified content formatting is byte-identical after edit + save
+- [x] **STYLE-ROUNDTRIP-01**: Editing a document never rewrites style parts unless user explicitly modifies styles
+- [x] **STYLE-ROUNDTRIP-02**: Unmodified content formatting is byte-identical after edit + save
 
 ### Document Creation
 
-- [ ] **CREATE-01**: Create() generates minimal valid .docx — default styles (Normal, Heading 1–9, Title), default theme, default font table, empty body with one section
-- [ ] **CREATE-02**: Generated blank document passes Word validation without repair dialog
-- [ ] **CREATE-03**: FromTemplate(path) clones template package, preserves style/theme/numbering parts, provides ready body
-- [ ] **CREATE-04**: Pre-populated template support — open template, keep existing body content, insert at specified locations
+- [x] **CREATE-01**: Create() generates minimal valid .docx — default styles (Normal, Heading 1–9, Title), default theme, default font table, empty body with one section
+- [x] **CREATE-02**: Generated blank document passes Word validation without repair dialog
+- [x] **CREATE-03**: FromTemplate(path) clones template package, preserves style/theme/numbering parts, provides ready body
+- [x] **CREATE-04**: Pre-populated template support — open template, keep existing body content, insert at specified locations
 
 ### Content API
 
-- [ ] **API-01**: Paragraphs with runs — text, bold, italic, underline, font, size, color, highlight
-- [ ] **API-02**: Paragraph formatting — alignment, spacing, line spacing, indentation
-- [ ] **API-03**: Named style application to paragraphs and runs via style engine
-- [ ] **API-04**: Tables — rows, cells, shading, borders, widths, hMerge/vMerge, named table styles
-- [ ] **API-05**: Images — PNG/JPEG with DrawingML anchors, explicit sizing
-- [ ] **API-06**: Lists — ordered/bulleted, multi-level, numbering-definition-backed
-- [ ] **API-07**: Headers/footers — default, first-page, odd/even variants per section
-- [ ] **API-08**: Hyperlinks on runs
-- [ ] **API-09**: Page setup — margins, orientation, paper size; page breaks
+- [x] **API-01**: Paragraphs with runs — text, bold, italic, underline, font, size, color, highlight
+- [x] **API-02**: Paragraph formatting — alignment, spacing, line spacing, indentation
+- [x] **API-03**: Named style application to paragraphs and runs via style engine
+- [x] **API-04**: Tables — rows, cells, shading, borders, widths, hMerge/vMerge, named table styles
+- [x] **API-05**: Images — PNG/JPEG with DrawingML anchors, explicit sizing
+- [x] **API-06**: Lists — ordered/bulleted, multi-level, numbering-definition-backed
+- [x] **API-07**: Headers/footers — default, first-page, odd/even variants per section
+- [x] **API-08**: Hyperlinks on runs
+- [x] **API-09**: Page setup — margins, orientation, paper size; page breaks
 
 ### Template Merge
 
@@ -104,10 +104,10 @@ Deferred behind v1 validation.
 | CREATE-01, CREATE-02 | Phase 1 | Implemented |
 | STYLE-CLONE-01..02 | Phase 2 | Implemented |
 | STYLE-RESOLVE-01..03 | Phase 2 | Implemented |
-| STYLE-ROUNDTRIP-01..02 | Phase 3 | Pending |
-| CREATE-03, CREATE-04 | Phase 3 | Pending |
-| API-01..03 | Phase 4 | Pending |
-| API-04..09 | Phase 5 | Complete |
+| STYLE-ROUNDTRIP-01..02 | Phase 3 | Implemented |
+| CREATE-03, CREATE-04 | Phase 3 | Implemented |
+| API-01..03 | Phase 4 | Implemented |
+| API-04..09 | Phase 5 | Implemented |
 | MERGE-01..03 | Phase 6 | Implemented |
 | EDIT-01..03 | Phase 6 | Implemented |
 | QUAL-01..03 | All phases | Implemented |

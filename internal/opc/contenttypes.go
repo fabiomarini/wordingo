@@ -6,7 +6,11 @@ import (
 	"io"
 	"sort"
 	"strings"
+
+	"github.com/fabiomarini/wordingo/internal/xmlutil"
 )
+
+// maxPartBytes is defined as MaxPartBytes in errors.go
 
 // contentTypesNS is the fixed namespace of [Content_Types].xml.
 const contentTypesNS = "http://schemas.openxmlformats.org/package/2006/content-types"
@@ -38,7 +42,7 @@ type ctXML struct {
 // parseContentTypes decodes [Content_Types].xml from r.
 func parseContentTypes(r io.Reader) (*ContentTypes, error) {
 	var x ctXML
-	if err := xml.NewDecoder(r).Decode(&x); err != nil {
+	if err := xmlutil.NewSafeDecoder(r, MaxPartBytes).Decode(&x); err != nil {
 		return nil, fmt.Errorf("opc: parse [Content_Types].xml: %w", err)
 	}
 	ct := &ContentTypes{

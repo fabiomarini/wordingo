@@ -8,6 +8,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/fabiomarini/wordingo/internal/xmlutil"
 )
 
 // relationshipsNS is the fixed package-level relationships namespace
@@ -43,7 +45,7 @@ type relsXML struct {
 // parseRelationships decodes a .rels part from r.
 func parseRelationships(r io.Reader) (*Relationships, error) {
 	var x relsXML
-	if err := xml.NewDecoder(r).Decode(&x); err != nil {
+	if err := xmlutil.NewSafeDecoder(r, MaxPartBytes).Decode(&x); err != nil {
 		return nil, fmt.Errorf("opc: parse relationships: %w", err)
 	}
 	rs := &Relationships{Rels: make([]Relationship, 0, len(x.Rels))}

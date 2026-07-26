@@ -94,17 +94,13 @@ func TestSafeDecoder_ValidXML(t *testing.T) {
 func TestSafeDecoder_RejectsDOCTYPE(t *testing.T) {
 	input := `<!DOCTYPE foo [<!ENTITY x "y">]><root/>`
 	d := xmlutil.NewSafeDecoder(strings.NewReader(input), 1<<20)
-	for {
-		tok, err := d.Token()
-		if err != nil {
-			t.Fatalf("unexpected error before DOCTYPE: %v", err)
-		}
-		if err := xmlutil.RejectDirective(tok); err != nil {
-			if !errors.Is(err, xmlutil.ErrDOCTYPE) {
-				t.Fatalf("expected ErrDOCTYPE, got %v", err)
-			}
-			return // success
-		}
+	var v struct{ XMLName xml.Name }
+	err := d.Decode(&v)
+	if err == nil {
+		t.Fatal("expected DOCTYPE rejection error, got nil")
+	}
+	if !errors.Is(err, xmlutil.ErrDOCTYPE) {
+		t.Fatalf("expected ErrDOCTYPE, got %v", err)
 	}
 }
 

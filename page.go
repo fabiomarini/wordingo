@@ -133,7 +133,7 @@ func (d *Document) AddPageBreak() *Paragraph {
 			PageBreakBefore: &wml.CT_OnOff{},
 		},
 	}
-	d.doc.Body.P = append(d.doc.Body.P, ct)
+	d.doc.Body.AppendP(ct)
 	d.dirty = true
 	return &Paragraph{ct: ct, doc: d}
 }

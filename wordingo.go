@@ -65,13 +65,15 @@ func Create() (*Document, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Document{
+	d := &Document{
 		pkg:          pkg,
 		doc:          doc,
 		nextImageID:  1,
 		nextHeaderID: 1,
 		nextFooterID: 1,
-	}, nil
+	}
+	d.syncBodyOrder()
+	return d, nil
 }
 
 // WriteTo writes the document to w. Returns bytes written.
@@ -240,9 +242,88 @@ func (d *Document) AddParagraph(text string) *Paragraph {
 	if d.doc.Body == nil {
 		d.doc.Body = &wml.CT_Body{SectPr: defaultSectPr()}
 	}
-	d.doc.Body.P = append(d.doc.Body.P, ct)
+	d.doc.Body.AppendP(ct)
 	d.dirty = true
 	return &Paragraph{ct: ct, doc: d}
+}
+
+// InsertBefore inserts a new paragraph with the given text before target
+// (identified by pointer identity). Returns the new paragraph, or nil if
+// target is not found in body paragraphs.
+func (d *Document) InsertBefore(target *Paragraph, text string) *Paragraph {
+	if d == nil {
+		panic("wordingo: InsertBefore called on nil Document")
+	}
+	if target == nil {
+		d.warn("wordingo: InsertBefore: target is nil")
+		return nil
+	}
+	ct := &wml.CT_P{}
+	if text != "" {
+		ct.R = []*wml.CT_R{{T: &wml.CT_Text{Value: text}}}
+	}
+	for i, p := range d.doc.Body.P {
+		if p == target.ct {
+			d.doc.Body.P = append(d.doc.Body.P, nil)
+			copy(d.doc.Body.P[i+1:], d.doc.Body.P[i:])
+			d.doc.Body.P[i] = ct
+			d.insertBodyOrderAtPIndex(i)
+			d.dirty = true
+			return &Paragraph{ct: ct, doc: d}
+		}
+	}
+	d.warn("wordingo: InsertBefore: target paragraph not found")
+	return nil
+}
+
+// InsertAfter inserts a new paragraph with the given text after target
+// (identified by pointer identity). Returns the new paragraph, or nil if
+// target is not found in body paragraphs.
+func (d *Document) InsertAfter(target *Paragraph, text string) *Paragraph {
+	if d == nil {
+		panic("wordingo: InsertAfter called on nil Document")
+	}
+	if target == nil {
+		d.warn("wordingo: InsertAfter: target is nil")
+		return nil
+	}
+	ct := &wml.CT_P{}
+	if text != "" {
+		ct.R = []*wml.CT_R{{T: &wml.CT_Text{Value: text}}}
+	}
+	for i, p := range d.doc.Body.P {
+		if p == target.ct {
+			d.doc.Body.P = append(d.doc.Body.P, nil)
+			copy(d.doc.Body.P[i+2:], d.doc.Body.P[i+1:])
+			d.doc.Body.P[i+1] = ct
+			d.insertBodyOrderAtPIndex(i + 1)
+			d.dirty = true
+			return &Paragraph{ct: ct, doc: d}
+		}
+	}
+	d.warn("wordingo: InsertAfter: target paragraph not found")
+	return nil
+}
+
+// DeleteParagraph removes target paragraph (identified by pointer identity)
+// from the document body. If target is not found, warns and returns.
+func (d *Document) DeleteParagraph(target *Paragraph) {
+	if d == nil {
+		panic("wordingo: DeleteParagraph called on nil Document")
+	}
+	if target == nil {
+		d.warn("wordingo: DeleteParagraph: target is nil")
+		return
+	}
+	for i, p := range d.doc.Body.P {
+		if p == target.ct {
+			d.doc.Body.P = append(d.doc.Body.P[:i], d.doc.Body.P[i+1:]...)
+			d.deleteBodyOrderAtPIndex(i)
+			d.dirty = true
+			return
+		}
+	}
+	d.warn("wordingo: DeleteParagraph: target paragraph not found")
 }
 
 // Close releases package and document references. The Document is

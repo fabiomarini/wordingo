@@ -51,13 +51,15 @@ func FromTemplateReader(r io.ReaderAt, size int64) (*Document, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Document{
+	d := &Document{
 		pkg:          dst,
 		doc:          doc,
 		nextImageID:  1,
 		nextHeaderID: 1,
 		nextFooterID: 1,
-	}, nil
+	}
+	d.syncBodyOrder()
+	return d, nil
 }
 
 // OpenTemplate opens a .docx template from path, clones its style
@@ -229,13 +231,15 @@ func OpenTemplateReader(r io.ReaderAt, size int64) (*Document, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Document{
+	d := &Document{
 		pkg:          dst,
 		doc:          doc,
 		nextImageID:  1,
 		nextHeaderID: 1,
 		nextFooterID: 1,
-	}, nil
+	}
+	d.syncBodyOrder()
+	return d, nil
 }
 
 // findRelByID returns the relationship with the given ID from rs, or nil.

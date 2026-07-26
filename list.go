@@ -53,7 +53,7 @@ func (lb *ListBuilder) AddItem(text string, level int) *ListBuilder {
 		},
 		R: []*wml.CT_R{{T: &wml.CT_Text{Value: text}}},
 	}
-	lb.doc.doc.Body.P = append(lb.doc.doc.Body.P, ct)
+	lb.doc.doc.Body.AppendP(ct)
 	lb.last = ct
 	lb.doc.dirty = true
 	return lb

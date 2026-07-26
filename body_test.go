@@ -26,14 +26,14 @@ func TestBody_BodyAccessor(t *testing.T) {
 	if elems[1].Type != ElementParagraph {
 		t.Errorf("element 1 should be paragraph, got type %d", elems[1].Type)
 	}
-	if elems[2].Type != ElementParagraph {
-		t.Errorf("element 2 should be paragraph, got type %d", elems[2].Type)
+	if elems[2].Type != ElementTable {
+		t.Errorf("element 2 should be table, got type %d", elems[2].Type)
 	}
-	if elems[3].Type != ElementTable {
-		t.Errorf("element 3 should be table, got type %d", elems[3].Type)
+	if elems[3].Type != ElementParagraph {
+		t.Errorf("element 3 should be paragraph, got type %d", elems[3].Type)
 	}
-	if elems[3].Table == nil {
-		t.Fatal("element 3 Table is nil")
+	if elems[2].Table == nil {
+		t.Fatal("element 2 Table is nil")
 	}
 }
 

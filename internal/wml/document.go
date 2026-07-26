@@ -7,6 +7,13 @@ import (
 	"github.com/fabiomarini/wordingo/internal/xmlutil"
 )
 
+type BodyElemType int
+
+const (
+	BodyP BodyElemType = iota
+	BodyTbl
+)
+
 // CT_Theme is an opaque theme part root with RawXML body
 // (full DrawingML is out of scope for Phase 1).
 type CT_Theme struct {
@@ -25,11 +32,74 @@ type CT_Document struct {
 
 // CT_Body is the document body container.
 type CT_Body struct {
-	XMLName xml.Name `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main body"`
-	P       []*CT_P `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main p"`
-	Tbl     []*CT_Tbl `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main tbl"`
-	SectPr  *CT_SectPr `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main sectPr"`
-	Raw     []xmlutil.RawXML `xml:",any"`
+	XMLName   xml.Name          `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main body"`
+	P         []*CT_P          `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main p"`
+	Tbl       []*CT_Tbl        `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main tbl"`
+	SectPr    *CT_SectPr       `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main sectPr"`
+	Raw       []xmlutil.RawXML `xml:",any"`
+	ElemOrder []BodyElemType   `xml:"-"` // insertion order: BodyP or BodyTbl
+}
+
+func (b *CT_Body) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	if err := e.EncodeToken(start); err != nil {
+		return err
+	}
+	if len(b.ElemOrder) > 0 {
+		pIdx := 0
+		tblIdx := 0
+		for _, elemType := range b.ElemOrder {
+			switch elemType {
+			case BodyP:
+				if pIdx < len(b.P) {
+					if err := e.Encode(b.P[pIdx]); err != nil {
+						return err
+					}
+					pIdx++
+				}
+			case BodyTbl:
+				if tblIdx < len(b.Tbl) {
+					if err := e.Encode(b.Tbl[tblIdx]); err != nil {
+						return err
+					}
+					tblIdx++
+				}
+			}
+		}
+	} else {
+		for _, p := range b.P {
+			if err := e.Encode(p); err != nil {
+				return err
+			}
+		}
+		for _, tbl := range b.Tbl {
+			if err := e.Encode(tbl); err != nil {
+				return err
+			}
+		}
+	}
+	for _, raw := range b.Raw {
+		if err := e.Encode(raw); err != nil {
+			return err
+		}
+	}
+	if b.SectPr != nil {
+		if err := e.Encode(b.SectPr); err != nil {
+			return err
+		}
+	}
+	return e.EncodeToken(xml.EndElement{Name: start.Name})
+}
+
+// AppendP adds a paragraph to the body and records it in ElemOrder.
+func (b *CT_Body) AppendP(p *CT_P) {
+	b.P = append(b.P, p)
+	b.ElemOrder = append(b.ElemOrder, BodyP)
+}
+
+// AppendTbl adds a table to the body and records it in ElemOrder.
+func (b *CT_Body) AppendTbl(tbl *CT_Tbl) {
+	b.Tbl = append(b.Tbl, tbl)
+	b.ElemOrder = append(b.ElemOrder, BodyTbl)
 }
 
 // CT_Hdr is a header part root.

@@ -271,7 +271,7 @@ func (d *Document) AddImageBytes(name string, data []byte, ct string) (*Run, err
 		d.doc.Body = &wml.CT_Body{SectPr: defaultSectPr()}
 	}
 	if len(d.doc.Body.P) == 0 {
-		d.doc.Body.P = append(d.doc.Body.P, &wml.CT_P{})
+		d.doc.Body.AppendP(&wml.CT_P{})
 	}
 	lastP := d.doc.Body.P[len(d.doc.Body.P)-1]
 	lastP.R = append(lastP.R, r)

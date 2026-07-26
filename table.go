@@ -89,6 +89,20 @@ func (tb *TableBuilder) SetShading(val, fill string) *TableBuilder {
 	return tb
 }
 
+// DeleteRow removes the row at the given index. Returns an error if the
+// index is out of range.
+func (tb *TableBuilder) DeleteRow(idx int) error {
+	if tb == nil {
+		panic("wordingo: DeleteRow called on nil TableBuilder")
+	}
+	if idx < 0 || idx >= len(tb.ct.Tr) {
+		return fmt.Errorf("wordingo: DeleteRow: index %d out of range (rows: %d)", idx, len(tb.ct.Tr))
+	}
+	tb.ct.Tr = append(tb.ct.Tr[:idx], tb.ct.Tr[idx+1:]...)
+	tb.doc.dirty = true
+	return nil
+}
+
 // Row returns the RowBuilder for the row at index idx. Grows the row
 // slice if idx is beyond current length.
 func (tb *TableBuilder) Row(idx int) *RowBuilder {
@@ -288,7 +302,7 @@ func (d *Document) AddTable(data [][]string) (*TableBuilder, error) {
 	if d.doc.Body == nil {
 		d.doc.Body = &wml.CT_Body{SectPr: defaultSectPr()}
 	}
-	d.doc.Body.Tbl = append(d.doc.Body.Tbl, ct)
+	d.doc.Body.AppendTbl(ct)
 	d.dirty = true
 	return &TableBuilder{ct: ct, doc: d}, nil
 }
@@ -307,7 +321,7 @@ func (d *Document) AddTableBuilder() *TableBuilder {
 	if d.doc.Body == nil {
 		d.doc.Body = &wml.CT_Body{SectPr: defaultSectPr()}
 	}
-	d.doc.Body.Tbl = append(d.doc.Body.Tbl, ct)
+	d.doc.Body.AppendTbl(ct)
 	d.dirty = true
 	return &TableBuilder{ct: ct, doc: d}
 }

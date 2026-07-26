@@ -653,27 +653,19 @@ All work is pure Go code additions to existing module. No CLIs, services, databa
 ### Tertiary (LOW confidence)
 - None — all claims verified against existing codebase or documented decisions.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Header/Footer part enumeration during merge**
-   - What we know: Header/footer parts are referenced via `sectPr.HdrFtrRef`/`sectPr.FtrRef` with `r:id`. Template.go already demonstrates cloning headers/footers (L121-192).
-   - What's unclear: Whether to enumerate header/footer parts lazily (parse on first merge encounter) or eagerly (parse all on `Merge()` call). Eager is safer for warning completeness.
-   - Recommendation: Parse header/footer parts lazily during merge walk. If a part can't be parsed, warn but continue.
+1. **Header/Footer part enumeration during merge** — [RESOLVED]
+   - Recommendation implemented: lazy enumeration during merge walk, warn on parse failure and continue. 06-01-PLAN.md Task 1 specifies this pattern with `walkHeaderParts`/`walkFooterParts`.
 
-2. **BodyElement struct union vs interface allocation cost**
-   - What we know: Agent discretion per CONTEXT.md. Interface approach allocates on heap for every element. Struct union with type enum avoids allocation.
-   - What's unclear: Whether allocation cost matters — `Body()` is typically called once, not in a hot loop.
-   - Recommendation: Use struct union (`BodyElement` with type enum + pointer fields) to avoid interface allocation. Simpler and cheaper. No behavioral difference for consumers.
+2. **BodyElement struct union vs interface allocation cost** — [RESOLVED]
+   - Recommendation implemented: struct union with type enum + pointer fields. 06-02-PLAN.md Task 1 specifies `BodyElement` as struct union with `BodyElementType` enum.
 
-3. **DeleteRow bounds checking style**
-   - What we know: Agent discretion. Existing code uses `panic` for nil receivers and `error` returns for functional validation (AddTable returns error for empty data).
-   - What's unclear: Whether `DeleteRow` with invalid index should panic or return error.
-   - Recommendation: Return `error` for consistency with existing error-returning methods (`AddTable` returns error for empty data). Panic pattern is reserved for nil receiver guards.
+3. **DeleteRow bounds checking style** — [RESOLVED]
+   - Recommendation implemented: return `error` for out-of-range index, consistent with existing `AddTable` error pattern. 06-02-PLAN.md Task 2 specifies `return error`.
 
-4. **Cross-document paragraph reference in editing ops**
-   - What we know: A `*Paragraph` from document A passed to `InsertBefore` on document B.
-   - What's unclear: Should this be detected and rejected?
-   - Recommendation: Not required for v0.1.0. Document will silently fail to find the paragraph (pointer comparison fails). Add cross-document guard later if needed.
+4. **Cross-document paragraph reference in editing ops** — [RESOLVED]
+   - Recommendation deferred: not required for v0.1.0. Silent no-op via pointer comparison failure is acceptable. Noted in 06-02-PLAN.md as a known limitation.
 
 ## Metadata
 

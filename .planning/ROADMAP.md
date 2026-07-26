@@ -10,7 +10,7 @@ Six phases, each with a hard gate that proves the phase's thesis before proceedi
 - [x] **Phase 2: Style Engine** — STYLE-CLONE + STYLE-RESOLVE (completed 2026-07-25)
 - [x] **Phase 3: Document Model** — open/read/save, STYLE-ROUNDTRIP, FromTemplate
 - [x] **Phase 4: Content API** — paragraphs, runs, formatting, named styles
-- [ ] **Phase 5: Rich Content** — tables, images, headers/footers, lists, hyperlinks, page setup
+- [x] **Phase 5: Rich Content** — tables, images, headers/footers, lists, hyperlinks, page setup (completed 2026-07-26)
 - [ ] **Phase 6: Merge & Edit** — {{placeholder}} merge, insert/delete, v1.0
 
 ## Phase Details
@@ -144,24 +144,28 @@ Plans:
 - [x] 05-02-PLAN.md — Headers/footers + page setup (Wave 2, depends on: 05-01) — COMPLETE 2026-07-26
 - [x] 05-03-PLAN.md — Lists + hyperlinks (Wave 3, depends on: 05-01) — COMPLETE 2026-07-26
 
-### Phase 6: Merge & Edit (v1.0)
+### Phase 6: Merge & Edit (v0.1.0)
 
-**Goal**: Template merge with hostile-input correctness, editing operations, v1.0 release
+**Goal**: Template merge with hostile-input correctness, editing operations, v0.1.0 release
 **Depends on**: Phase 5
-**Requirements**: MERGE-01..03, EDIT-01..03
+**Requirements**: MERGE-01..03, EDIT-01..03, QUAL-01..03
 **Success Criteria**:
 
   1. {{key}} replaced in paragraphs, table cells, headers, footers — including placeholders split across runs
   2. Missing keys in Warnings(), never silent
   3. Insert/delete paragraphs and rows; replace run text; all edits round-trip-safe
-  4. All four PRD use cases (UC1–UC4) pass end-to-end; v1.0.0 tagged
+  4. All four PRD use cases (UC1–UC4) pass end-to-end; v0.1.0 tagged
 
 **Plans**: 2 plans
 
 Plans:
+**Wave 1**
 
-- [ ] 06-01: Merge engine — placeholder detection across split runs, all part types
-- [ ] 06-02: Edit operations + UC1–UC4 acceptance suite + v1.0 release
+- [ ] 06-01-PLAN.md — Merge engine (merge.go): placeholder detection across split runs, all part types, missing-key warnings
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 06-02-PLAN.md — Edit ops + BodyElement + acceptance: InsertBefore/After/DeleteParagraph, DeleteRow, SetText/ReplaceText, BodyElement, ParagraphContainer, UC1–UC4, v0.1.0 tag
 
 ## Progress
 
@@ -171,7 +175,7 @@ Plans:
 | 2. Style Engine | 4/4 | ✅ Complete | 2026-07-25 |
 | 3. Document Model | 2/2 | ✅ Complete | Zero unintended diffs on round-trip |
 | 4. Content API | 2/2 | ✅ Complete | Formatted text doc programmatically |
-| 5. Rich Content | 3/3 | ✅ Complete | Complete business documents |
-| 6. Merge & Edit | 0/2 | Not started | UC1–UC4 green, v1.0 tagged |
+| 5. Rich Content | 3/3 | Complete    | 2026-07-26 |
+| 6. Merge & Edit | 0/2 | Planned | UC1–UC4 green, v0.1.0 tagged |
 
 Total: 16 plans, 16 complete, 33 v1 requirements.

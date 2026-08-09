@@ -45,6 +45,9 @@ Main document type. Created via `Create`, `Open`, `OpenReader`, `FromTemplate`, 
 | `ExtractText` | `(opts *ExtractOpts) (string, error)` | Plain text extraction |
 | `ToMarkdown` | `(opts *ExtractOpts) (string, error)` | Markdown export |
 | `ImportMarkdown` | `(md string)` | Append markdown content |
+| `Headings` | `() []Heading` | Document outline (Heading1–9 styles / outline levels) |
+| `AddTableOfContents` | `(opts *TOCOptions) (*TOC, error)` | Append a TOC section built from the headings |
+| `InsertTableOfContentsBefore` | `(target *Paragraph, opts *TOCOptions) (*TOC, error)` | Insert a TOC section before a paragraph |
 
 ---
 
@@ -226,6 +229,24 @@ type ExtractOpts struct {
     ScopedParts ScopedParts
     Separator   string
 }
+
+type Heading struct {
+    Level int    // 1..9
+    Text  string // trimmed heading text
+    Style string // style id, e.g. "Heading1" ("" if from outline level)
+}
+
+type TOCOptions struct {
+    Title        string // default "Table of Contents"
+    Levels       int    // deepest heading level (1..9), default 3
+    UpdateOnOpen *bool  // nil/true: set w:updateFields so Word refreshes on open
+}
+
+type TOC struct {
+    // returned by AddTableOfContents / InsertTableOfContentsBefore
+}
+
+func (t *TOC) Title() *Paragraph // the TOC title paragraph
 
 type BodyElementType int   // ElementParagraph, ElementTable
 

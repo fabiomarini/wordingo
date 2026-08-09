@@ -12,6 +12,7 @@ type CT_Hyperlink struct {
 	XMLName xml.Name        `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main hyperlink"`
 	ID      string          `xml:"http://schemas.openxmlformats.org/officeDocument/2006/relationships id,attr,omitempty"`
 	Anchor  *string         `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main anchor,attr,omitempty"`
+	History *string         `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main history,attr,omitempty"`
 	R       []*CT_R         `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main r"`
 	Raw     []xmlutil.RawXML `xml:",any"`
 }

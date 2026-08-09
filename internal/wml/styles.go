@@ -10,6 +10,7 @@ import (
 type CT_Settings struct {
 	XMLName        xml.Name         `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main settings"`
 	Zoom           *CT_Zoom         `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main zoom"`
+	UpdateFields   *CT_UpdateFields `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main updateFields"`
 	DefaultTabStop *CT_DefaultTabStop `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main defaultTabStop"`
 	Compat         *CT_Compat       `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main compat"`
 	Raw            []xmlutil.RawXML `xml:",any"`

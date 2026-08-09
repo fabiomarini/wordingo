@@ -120,11 +120,13 @@ type CT_Ftr struct {
 
 // CT_P is a paragraph.
 type CT_P struct {
-	XMLName  xml.Name        `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main p"`
-	PPr      *CT_PPr         `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main pPr"`
-	R        []*CT_R         `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main r"`
-	Hyperlink []*CT_Hyperlink `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main hyperlink"`
-	Raw      []xmlutil.RawXML `xml:",any"`
+	XMLName      xml.Name          `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main p"`
+	PPr          *CT_PPr           `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main pPr"`
+	BookmarkStart []*CT_BookmarkStart `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main bookmarkStart"`
+	R            []*CT_R           `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main r"`
+	Hyperlink    []*CT_Hyperlink   `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main hyperlink"`
+	BookmarkEnd  []*CT_BookmarkEnd `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main bookmarkEnd"`
+	Raw          []xmlutil.RawXML  `xml:",any"`
 }
 
 // CT_PPr holds paragraph properties.
@@ -143,19 +145,22 @@ type CT_PPr struct {
 	SectPr        *CT_SectPr       `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main sectPr"`
 	Shd           *CT_Shd          `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main shd"`
 	OutlineLvl    *CT_OutlineLvl   `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main outlineLvl"`
+	RPr           *CT_RPr          `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main rPr"`
 	Raw           []xmlutil.RawXML `xml:",any"`
 }
 
 // CT_R is a run (text with formatting scope).
 type CT_R struct {
-	XMLName xml.Name    `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main r"`
-	RPr     *CT_RPr     `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main rPr"`
-	T       *CT_Text    `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main t"`
-	Br      *CT_Br      `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main br"`
-	Tab     *CT_Tab     `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main tab"`
-	Cr      *CT_Cr      `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main cr"`
-	Drawing *CT_Drawing `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main drawing"`
-	Raw     []xmlutil.RawXML `xml:",any"`
+	XMLName  xml.Name        `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main r"`
+	RPr      *CT_RPr         `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main rPr"`
+	FldChar  *CT_FldChar     `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main fldChar"`
+	InstrText *CT_InstrText  `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main instrText"`
+	T        *CT_Text        `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main t"`
+	Br       *CT_Br          `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main br"`
+	Tab      *CT_Tab         `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main tab"`
+	Cr       *CT_Cr          `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main cr"`
+	Drawing  *CT_Drawing     `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main drawing"`
+	Raw      []xmlutil.RawXML `xml:",any"`
 }
 
 // CT_RPr holds run properties.
@@ -172,6 +177,7 @@ type CT_RPr struct {
 	Highlight *CT_Highlight  `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main highlight"`
 	VertAlign *CT_VertAlign  `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main vertAlign"`
 	Lang     *CT_Lang        `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main lang"`
+	NoProof  *CT_OnOff       `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main noProof"`
 	Strike   *CT_OnOff       `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main strike"`
 	DStrike  *CT_OnOff       `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main dstrike"`
 	Vanish   *CT_OnOff       `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main vanish"`

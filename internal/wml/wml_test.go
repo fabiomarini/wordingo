@@ -442,3 +442,76 @@ func TestCT_NumLvlOverrideRoundTrip(t *testing.T) {
 		})
 	}
 }
+
+// TestRoundTrip_Fields verifies that TOC field characters, instruction
+// text (with xml:space preservation), and bookmarks survive a
+// decode/encode round trip.
+func TestRoundTrip_Fields(t *testing.T) {
+	input := `<w:p xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:pPr><w:spacing w:before="240" w:after="120"/></w:pPr><w:bookmarkStart w:id="7" w:name="_Toc00000007"/><w:r><w:fldChar w:fldCharType="begin" w:dirty="true"/></w:r><w:r><w:instrText xml:space="preserve"> TOC \o "1-3" \h \z \u </w:instrText></w:r><w:r><w:fldChar w:fldCharType="separate"/></w:r><w:r><w:t>Table of Contents</w:t></w:r><w:bookmarkEnd w:id="7"/></w:p>`
+
+	var p wml.CT_P
+	if err := xml.Unmarshal([]byte(input), &p); err != nil {
+		t.Fatalf("Unmarshal: %v", err)
+	}
+
+	if len(p.BookmarkStart) != 1 || p.BookmarkStart[0].ID == nil || *p.BookmarkStart[0].ID != 7 ||
+		p.BookmarkStart[0].Name == nil || *p.BookmarkStart[0].Name != "_Toc00000007" {
+		t.Errorf("bookmarkStart = %+v", p.BookmarkStart)
+	}
+	if len(p.BookmarkEnd) != 1 || p.BookmarkEnd[0].ID == nil || *p.BookmarkEnd[0].ID != 7 {
+		t.Errorf("bookmarkEnd = %+v", p.BookmarkEnd)
+	}
+	if len(p.R) != 4 {
+		t.Fatalf("got %d runs, want 4", len(p.R))
+	}
+	begin := p.R[0].FldChar
+	if begin == nil || begin.Type == nil || *begin.Type != "begin" || begin.Dirty == nil || *begin.Dirty != "true" {
+		t.Errorf("run[0] fldChar = %+v", begin)
+	}
+	if it := p.R[1].InstrText; it == nil || it.Value != ` TOC \o "1-3" \h \z \u ` {
+		t.Errorf("run[1] instrText = %+v", p.R[1].InstrText)
+	}
+	if sep := p.R[2].FldChar; sep == nil || sep.Type == nil || *sep.Type != "separate" {
+		t.Errorf("run[2] fldChar = %+v", sep)
+	}
+
+	var buf bytes.Buffer
+	enc := xmlutil.NewEncoder(&buf)
+	if err := enc.Encode(&p); err != nil {
+		t.Fatalf("Encode: %v", err)
+	}
+	enc.Flush()
+	out := buf.String()
+	for _, marker := range []string{
+		`<w:bookmarkStart w:id="7" w:name="_Toc00000007">`,
+		`w:fldCharType="begin" w:dirty="true"`,
+		`xml:space="preserve"> TOC \o &#34;1-3&#34; \h \z \u `,
+		`<w:bookmarkEnd w:id="7">`,
+	} {
+		if !strings.Contains(out, marker) {
+			t.Errorf("output missing %q:\n%s", marker, out)
+		}
+	}
+}
+
+// TestRoundTrip_UpdateFields verifies the settings.xml updateFields
+// element decodes and re-encodes.
+func TestRoundTrip_UpdateFields(t *testing.T) {
+	input := `<w:settings xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:zoom w:percent="100"/><w:updateFields w:val="true"/></w:settings>`
+	var s wml.CT_Settings
+	if err := xml.Unmarshal([]byte(input), &s); err != nil {
+		t.Fatalf("Unmarshal: %v", err)
+	}
+	if s.UpdateFields == nil || s.UpdateFields.Val == nil || *s.UpdateFields.Val != "true" {
+		t.Fatalf("UpdateFields = %+v", s.UpdateFields)
+	}
+	var buf bytes.Buffer
+	enc := xmlutil.NewEncoder(&buf)
+	if err := enc.Encode(&s); err != nil {
+		t.Fatalf("Encode: %v", err)
+	}
+	enc.Flush()
+	if out := buf.String(); !strings.Contains(out, `w:updateFields w:val="true"`) {
+		t.Errorf("output missing updateFields:\n%s", out)
+	}
+}

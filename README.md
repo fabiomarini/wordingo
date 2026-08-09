@@ -28,6 +28,7 @@ doc.Save("output.docx")
 | **Page setup** | Portrait/landscape, Letter/A4/Legal, custom margins and page breaks |
 | **Template merge** | Replace `{{placeholders}}` in text, table cells, headers, and footers |
 | **Edit operations** | Insert or delete paragraphs by reference, replace text in runs, delete table rows |
+| **Table of contents** | Generate a TOC from the document's own headings, with live field updates in Word |
 | **Text extraction** | Pull plain text from the whole document or specific sections |
 | **Markdown export** | Convert any .docx to GitHub-flavored Markdown |
 | **Markdown import** | Create a Word doc from Markdown — headings, lists, tables, code blocks, images |
@@ -231,6 +232,29 @@ text, _ := doc.ExtractText(&wordingo.ExtractOpts{
 
 Extract text from the body, tables, headers, and footers — or pick specific sections. Read-only, doesn't modify the document.
 
+### Table of contents / summary
+
+Build a table of contents straight from the document's own headings:
+
+```go
+// Inspect the outline first, if you like:
+for _, h := range doc.Headings() {
+    fmt.Printf("%d. %s\n", h.Level, h.Text)   // 1. Introduction
+}
+
+// Append a TOC section at the end of the document:
+toc, _ := doc.AddTableOfContents(nil)
+toc.Title().SetStyle("Title")                 // restyle the heading if you want
+
+// Or place it before a specific paragraph (e.g. right after the title):
+doc.InsertTableOfContentsBefore(doc.Paragraphs()[1], &wordingo.TOCOptions{
+    Title:  "Contents",
+    Levels: 2,
+})
+```
+
+The generated section is a real Word TOC field (`TOC \o "1-N" \h \z \u`): it collects every body paragraph styled `Heading1`–`Heading9` (or carrying an explicit outline level). Entries link to bookmarks placed on the headings, and `w:updateFields` is set in the document settings so Word repopulates the TOC — with live page numbers — the moment the file is opened. Viewers that don't refresh fields still see the generated summary. Set `TOCOptions.UpdateOnOpen` to `false` to leave the document settings untouched.
+
 ### Convert to and from Markdown
 
 ```go
@@ -277,6 +301,7 @@ cd examples/01-blank-doc && go run main.go
 | 9 | [09-merge-and-edit](examples/09-merge-and-edit/README.md) | Placeholder merge, insert/delete, edit |
 | 10 | [10-template-to-document](examples/10-template-to-document/README.md) | Using templates |
 | 11 | [11-text-extraction-markdown](examples/11-text-extraction-markdown/README.md) | Text extraction, markdown round-trip |
+| 12 | [12-table-of-contents](examples/12-table-of-contents/README.md) | Table of contents from the document's headings |
 
 ## Design principles
 

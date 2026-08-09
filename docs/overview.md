@@ -30,6 +30,7 @@ wordingo builds Word documents from scratch, opens existing ones for editing, co
 | Page setup | Portrait/landscape, Letter/A4/Legal, custom margins |
 | Template merge | Replace `{{placeholders}}` in body, tables, headers, footers |
 | Edit operations | Insert/delete paragraphs by reference, replace text, delete rows |
+| Table of contents | TOC from the document's own headings, live Word field |
 | Text extraction | Pull plain text from body/tables/headers/footers |
 | Markdown export | .docx → GitHub-flavored Markdown |
 | Markdown import | Markdown → .docx (headings, lists, tables, code blocks) |

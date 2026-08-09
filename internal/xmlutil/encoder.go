@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/xml"
 	"io"
+	"sort"
 	"strings"
 )
 
@@ -225,7 +226,15 @@ func (enc *Encoder) addNSDecls(se *xml.StartElement) {
 	// relationships URI also maps to "r" but must not shadow this.
 	prefixURI["r"] = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 
+	// Declare xmlns:* in sorted prefix order so re-encoded parts are
+	// byte-deterministic (map iteration order is randomized in Go).
+	used := make([]string, 0, len(enc.usedPrefixes))
 	for pfx := range enc.usedPrefixes {
+		used = append(used, pfx)
+	}
+	sort.Strings(used)
+	mcDeclared := false
+	for _, pfx := range used {
 		if pfx == "xml" {
 			continue // xml: prefix is implicit, never declared
 		}
@@ -237,6 +246,9 @@ func (enc *Encoder) addNSDecls(se *xml.StartElement) {
 			Name:  xml.Name{Local: "xmlns:" + pfx},
 			Value: uri,
 		})
+		if pfx == "mc" {
+			mcDeclared = true
+		}
 	}
 
 	// mc:Ignorable for extension prefixes that have been used.
@@ -247,6 +259,15 @@ func (enc *Encoder) addNSDecls(se *xml.StartElement) {
 		}
 	}
 	if len(ignorable) > 0 {
+		// The attribute name itself uses the mc prefix, so the
+		// namespace must be declared or the output is not
+		// well-formed XML (unbound prefix).
+		if !mcDeclared {
+			se.Attr = append(se.Attr, xml.Attr{
+				Name:  xml.Name{Local: "xmlns:mc"},
+				Value: "http://schemas.openxmlformats.org/markup-compatibility/2006",
+			})
+		}
 		se.Attr = append(se.Attr, xml.Attr{
 			Name:  xml.Name{Local: "mc:Ignorable"},
 			Value: strings.Join(ignorable, " "),

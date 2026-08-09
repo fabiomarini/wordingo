@@ -247,3 +247,178 @@ func TestEncoder_XMLNSDeclaredOnce(t *testing.T) {
 		t.Errorf("xmlns:w should appear exactly once, got %d occurrences:\n%s", count, output)
 	}
 }
+
+// encoderTestParaExt is a paragraph whose pPr carries a raw w14
+// extension element (like w14:paraId in real Word output), forcing the
+// encoder to declare w14 and emit mc:Ignorable.
+type encoderTestParaExt struct {
+	XMLName xml.Name           `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main p"`
+	PPr     *encoderTestPPrExt `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main pPr"`
+	R       *encoderTestRun    `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main r"`
+}
+
+type encoderTestPPrExt struct {
+	XMLName xml.Name         `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main pPr"`
+	Raw     []xmlutil.RawXML `xml:",any"`
+}
+
+func TestEncoder_MCIgnorableDeclaresMC(t *testing.T) {
+	// Rebuild a w14:paraId element the way decoding a Word document
+	// captures it: namespace-qualified name, no prefix.
+	var raw xmlutil.RawXML
+	{
+		var buf bytes.Buffer
+		enc := xml.NewEncoder(&buf)
+		start := xml.StartElement{
+			Name: xml.Name{Space: "http://schemas.microsoft.com/office/word/2010/wordml", Local: "paraId"},
+			Attr: []xml.Attr{{
+				Name:  xml.Name{Space: "http://schemas.microsoft.com/office/word/2010/wordml", Local: "val"},
+				Value: "6B4DFA3C",
+			}},
+		}
+		if err := enc.EncodeToken(start); err != nil {
+			t.Fatal(err)
+		}
+		if err := enc.EncodeToken(start.End()); err != nil {
+			t.Fatal(err)
+		}
+		if err := enc.Flush(); err != nil {
+			t.Fatal(err)
+		}
+		dec := xml.NewDecoder(bytes.NewReader(buf.Bytes()))
+		if err := dec.Decode(&raw); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	v := encoderTestParaExt{PPr: &encoderTestPPrExt{Raw: []xmlutil.RawXML{raw}}}
+	var buf bytes.Buffer
+	enc := xmlutil.NewEncoder(&buf)
+	if err := enc.Encode(v); err != nil {
+		t.Fatalf("Encode: %v", err)
+	}
+	if err := enc.Flush(); err != nil {
+		t.Fatalf("Flush: %v", err)
+	}
+	output := buf.String()
+
+	// mc:Ignorable must be accompanied by an xmlns:mc declaration,
+	// otherwise the output is not well-formed XML (unbound prefix).
+	if !strings.Contains(output, `mc:Ignorable="w14"`) {
+		t.Errorf("output missing mc:Ignorable=\"w14\":\n%s", output)
+	}
+	if !strings.Contains(output, `xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"`) {
+		t.Errorf("output missing xmlns:mc declaration:\n%s", output)
+	}
+
+	// Full well-formedness check.
+	dec := xml.NewDecoder(strings.NewReader(output))
+	for {
+		if _, err := dec.Token(); err != nil {
+			if err.Error() == "EOF" {
+				break
+			}
+			t.Fatalf("output is not well-formed XML: %v\n%s", err, output)
+		}
+	}
+}
+
+func TestEncoder_NoDuplicateMCDeclaration(t *testing.T) {
+	// A paragraph with an mc:AlternateContent child: mc is then used as
+	// an element prefix, so it is declared via the canonical loop and
+	// must not be declared a second time for mc:Ignorable.
+	var alt xmlutil.RawXML
+	{
+		var buf bytes.Buffer
+		enc := xml.NewEncoder(&buf)
+		start := xml.StartElement{
+			Name: xml.Name{Space: "http://schemas.openxmlformats.org/markup-compatibility/2006", Local: "AlternateContent"},
+		}
+		if err := enc.EncodeToken(start); err != nil {
+			t.Fatal(err)
+		}
+		if err := enc.EncodeToken(start.End()); err != nil {
+			t.Fatal(err)
+		}
+		if err := enc.Flush(); err != nil {
+			t.Fatal(err)
+		}
+		dec := xml.NewDecoder(bytes.NewReader(buf.Bytes()))
+		if err := dec.Decode(&alt); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	v := encoderTestParaExt{
+		PPr: &encoderTestPPrExt{Raw: []xmlutil.RawXML{alt}},
+		R:   &encoderTestRun{T: &encoderTestText{Value: "x"}},
+	}
+	var buf bytes.Buffer
+	enc := xmlutil.NewEncoder(&buf)
+	if err := enc.Encode(v); err != nil {
+		t.Fatal(err)
+	}
+	if err := enc.Flush(); err != nil {
+		t.Fatal(err)
+	}
+	output := buf.String()
+	count := strings.Count(output, `xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"`)
+	if count != 1 {
+		t.Errorf("xmlns:mc should appear exactly once, got %d:\n%s", count, output)
+	}
+}
+
+func TestEncoder_DeterministicOutput(t *testing.T) {
+	// Re-encoded output must be byte-identical across runs even though
+	// xmlns declaration order comes from map iteration internally.
+	v := encoderTestParaExt{
+		PPr: &encoderTestPPrExt{Raw: []xmlutil.RawXML{rawW14ParaID(t)}},
+		R:   &encoderTestRun{T: &encoderTestText{Value: "deterministic"}},
+	}
+	encode := func() string {
+		var buf bytes.Buffer
+		enc := xmlutil.NewEncoder(&buf)
+		if err := enc.Encode(v); err != nil {
+			t.Fatal(err)
+		}
+		if err := enc.Flush(); err != nil {
+			t.Fatal(err)
+		}
+		return buf.String()
+	}
+	first := encode()
+	for i := 0; i < 50; i++ {
+		if got := encode(); got != first {
+			t.Fatalf("iteration %d: output differs (nondeterministic encoding)", i)
+		}
+	}
+}
+
+// rawW14ParaID returns a RawXML capture of a w14:paraId element.
+func rawW14ParaID(t *testing.T) xmlutil.RawXML {
+	t.Helper()
+	var raw xmlutil.RawXML
+	var buf bytes.Buffer
+	enc := xml.NewEncoder(&buf)
+	start := xml.StartElement{
+		Name: xml.Name{Space: "http://schemas.microsoft.com/office/word/2010/wordml", Local: "paraId"},
+		Attr: []xml.Attr{{
+			Name:  xml.Name{Space: "http://schemas.microsoft.com/office/word/2010/wordml", Local: "val"},
+			Value: "6B4DFA3C",
+		}},
+	}
+	if err := enc.EncodeToken(start); err != nil {
+		t.Fatal(err)
+	}
+	if err := enc.EncodeToken(start.End()); err != nil {
+		t.Fatal(err)
+	}
+	if err := enc.Flush(); err != nil {
+		t.Fatal(err)
+	}
+	dec := xml.NewDecoder(bytes.NewReader(buf.Bytes()))
+	if err := dec.Decode(&raw); err != nil {
+		t.Fatal(err)
+	}
+	return raw
+}

@@ -187,6 +187,21 @@ func TestAddTableOfContentsStructure(t *testing.T) {
 		if len(ep.Hyperlink) != 1 || ep.Hyperlink[0].Anchor == nil || *ep.Hyperlink[0].Anchor != wantAnchors[i] {
 			t.Errorf("entry[%d] hyperlink anchor = %+v, want %q", i, ep.Hyperlink, wantAnchors[i])
 		}
+		// The cached result must display the heading text first, then
+		// the tab and the PAGEREF page number — never a leading "0".
+		hlRuns := ep.Hyperlink[0].R
+		if len(hlRuns) < 7 || hlRuns[0].T == nil || hlRuns[0].T.Value != wantTexts[i] {
+			t.Errorf("entry[%d] first hyperlink run = %+v, want heading text first", i, hlRuns[0])
+		}
+		if hlRuns[1].Tab == nil {
+			t.Errorf("entry[%d] second hyperlink run missing tab", i)
+		}
+		if len(hlRuns) >= 4 && hlRuns[2].FldChar == nil {
+			t.Errorf("entry[%d] PAGEREF field not inside hyperlink", i)
+		}
+		if len(ep.R) != 0 {
+			t.Errorf("entry[%d] has %d direct runs; all entry content must live in the hyperlink", i, len(ep.R))
+		}
 		// Right tab with dot leader; left indent grows with level.
 		if ep.PPr == nil || ep.PPr.Tabs == nil || len(ep.PPr.Tabs.Tab) != 1 {
 			t.Fatalf("entry[%d] missing right tab", i)
@@ -204,10 +219,23 @@ func TestAddTableOfContentsStructure(t *testing.T) {
 		}
 	}
 
-	// Last entry closes the TOC field.
-	lastRuns := entries[3].X().R
-	if last := lastRuns[len(lastRuns)-1].FldChar; last == nil || last.Type == nil || *last.Type != "end" {
-		t.Errorf("last entry does not close the TOC field: %+v", lastRuns[len(lastRuns)-1])
+	// Last entry closes the TOC field: the closing character is the
+	// final run inside the last entry's hyperlink, after the PAGEREF end.
+	for i := 0; i < 4; i++ {
+		hl := entries[i].X().Hyperlink[0]
+		ends := 0
+		for _, r := range hl.R {
+			if r.FldChar != nil && r.FldChar.Type != nil && *r.FldChar.Type == "end" {
+				ends++
+			}
+		}
+		want := 1 // the PAGEREF field's own end
+		if i == 3 {
+			want = 2 // plus the closing character of the TOC field
+		}
+		if ends != want {
+			t.Errorf("entry[%d] has %d end field chars, want %d", i, ends, want)
+		}
 	}
 
 	// Headings carry matching bookmarks.
@@ -229,18 +257,21 @@ func TestAddTableOfContentsStructure(t *testing.T) {
 	}
 }
 
-// entryText returns the concatenated text of a TOC entry paragraph
-// (hyperlink runs only — page-number field excluded).
+// entryText returns the heading-text portion of a TOC entry paragraph
+// (the text run before the tab; the PAGEREF field's cached "0" is
+// excluded).
 func entryText(p *wml.CT_P) string {
-	var b strings.Builder
 	for _, hl := range p.Hyperlink {
 		for _, r := range hl.R {
+			if r.FldChar != nil {
+				return "" // field content reached without finding text
+			}
 			if r.T != nil {
-				b.WriteString(r.T.Value)
+				return r.T.Value
 			}
 		}
 	}
-	return b.String()
+	return ""
 }
 
 func entryXML(t *testing.T, p *wml.CT_P) string {

@@ -436,28 +436,26 @@ func tocTitleParagraph(title, instr string) *wml.CT_P {
 }
 
 // tocEntryParagraph builds one TOC entry: a hyperlink to the heading's
-// bookmark (heading text + tab), a PAGEREF field for the page number,
-// and — when closeTOC is set — the TOC field's closing character.
+// bookmark containing the heading text, the tab, and the PAGEREF field
+// for the page number — Word's canonical TOC layout, where the field
+// renders after the text. When closeTOC is set, the TOC field's closing
+// character is appended inside the hyperlink, after the inner PAGEREF
+// field, so field nesting stays ordered.
 func tocEntryParagraph(level int, text, anchor string, tabPos int64, closeTOC bool) *wml.CT_P {
 	left := int64(level-1) * 226
 	hanging := int64(226)
 	zero := int64(0)
 	nop := tocNoProofRPr()
 
-	// Hyperlink to the heading bookmark.
-	history := "1"
-	hl := &wml.CT_Hyperlink{
-		Anchor:  &anchor,
-		History: &history,
-		R: []*wml.CT_R{
-			{RPr: nop, T: &wml.CT_Text{Value: text}},
-			{RPr: nop, Tab: &wml.CT_Tab{}},
-		},
-	}
-
-	// PAGEREF field for the page number.
+	// Hyperlink to the heading bookmark, wrapping the whole entry:
+	// text, tab, then the PAGEREF field. Keeping the field inside the
+	// hyperlink ensures cached viewers render "Heading ..... 0" rather
+	// than a leading placeholder before the heading text.
 	instr := fmt.Sprintf(" PAGEREF %s \\h ", anchor)
-	runs := []*wml.CT_R{
+	history := "1"
+	hlRuns := []*wml.CT_R{
+		{RPr: nop, T: &wml.CT_Text{Value: text}},
+		{RPr: nop, Tab: &wml.CT_Tab{}},
 		{RPr: nop, FldChar: &wml.CT_FldChar{Type: strPtr("begin")}},
 		{RPr: nop, InstrText: &wml.CT_InstrText{Value: instr}},
 		{RPr: nop, FldChar: &wml.CT_FldChar{Type: strPtr("separate")}},
@@ -465,8 +463,9 @@ func tocEntryParagraph(level int, text, anchor string, tabPos int64, closeTOC bo
 		{RPr: nop, FldChar: &wml.CT_FldChar{Type: strPtr("end")}},
 	}
 	if closeTOC {
-		runs = append(runs, &wml.CT_R{FldChar: &wml.CT_FldChar{Type: strPtr("end")}})
+		hlRuns = append(hlRuns, &wml.CT_R{FldChar: &wml.CT_FldChar{Type: strPtr("end")}})
 	}
+	hl := &wml.CT_Hyperlink{Anchor: &anchor, History: &history, R: hlRuns}
 
 	return &wml.CT_P{
 		PPr: &wml.CT_PPr{
@@ -480,7 +479,6 @@ func tocEntryParagraph(level int, text, anchor string, tabPos int64, closeTOC bo
 			RPr: nop,
 		},
 		Hyperlink: []*wml.CT_Hyperlink{hl},
-		R:         runs,
 	}
 }
 
@@ -498,7 +496,7 @@ func tocHintParagraph() *wml.CT_P {
 
 // tocFieldEndParagraph closes the TOC field in its own paragraph. Used
 // only when the TOC has no entries; otherwise the closing character is
-// appended to the last entry paragraph.
+// appended inside the last entry's hyperlink.
 func tocFieldEndParagraph() *wml.CT_P {
 	return &wml.CT_P{
 		R: []*wml.CT_R{{FldChar: &wml.CT_FldChar{Type: strPtr("end")}}},

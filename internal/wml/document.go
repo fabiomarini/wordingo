@@ -127,6 +127,77 @@ type CT_P struct {
 	Hyperlink    []*CT_Hyperlink   `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main hyperlink"`
 	BookmarkEnd  []*CT_BookmarkEnd `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main bookmarkEnd"`
 	Raw          []xmlutil.RawXML  `xml:",any"`
+
+	// HyperlinkFirst orders hyperlink children before run children when
+	// marshaling (xml:"-" so it never serializes). The TOC generator
+	// uses it to emit the closing field character of a TOC field after
+	// the entry's hyperlink, matching Word's own TOC layout. All other
+	// paragraphs keep the default order: runs, then hyperlinks.
+	HyperlinkFirst bool `xml:"-"`
+}
+
+// MarshalXML emits the paragraph children in schema order. Runs are
+// emitted before hyperlink elements by default; when HyperlinkFirst is
+// set the order is reversed (TOC entries need their PAGEREF-bearing
+// hyperlink before the closing field character run).
+//
+// Go's xml package ignores the XMLName field for types that implement
+// xml.Marshaler when they are passed directly to Encoder.Encode — the
+// start element then carries the Go type name ("CT_P") or an empty
+// name. Substitute the canonical name in those cases (the XMLName
+// field value itself is only populated on unmarshal); struct-field
+// encoding already passes the correct start element.
+func (p *CT_P) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	if start.Name.Local == "" || start.Name.Local == "CT_P" {
+		start.Name = xml.Name{Space: NSWMLMain, Local: "p"}
+	}
+	if err := e.EncodeToken(start); err != nil {
+		return err
+	}
+	if p.PPr != nil {
+		if err := e.Encode(p.PPr); err != nil {
+			return err
+		}
+	}
+	for _, bs := range p.BookmarkStart {
+		if err := e.Encode(bs); err != nil {
+			return err
+		}
+	}
+	if p.HyperlinkFirst {
+		for _, h := range p.Hyperlink {
+			if err := e.Encode(h); err != nil {
+				return err
+			}
+		}
+		for _, r := range p.R {
+			if err := e.Encode(r); err != nil {
+				return err
+			}
+		}
+	} else {
+		for _, r := range p.R {
+			if err := e.Encode(r); err != nil {
+				return err
+			}
+		}
+		for _, h := range p.Hyperlink {
+			if err := e.Encode(h); err != nil {
+				return err
+			}
+		}
+	}
+	for _, be := range p.BookmarkEnd {
+		if err := e.Encode(be); err != nil {
+			return err
+		}
+	}
+	for _, raw := range p.Raw {
+		if err := e.Encode(raw); err != nil {
+			return err
+		}
+	}
+	return e.EncodeToken(xml.EndElement{Name: start.Name})
 }
 
 // CT_PPr holds paragraph properties.

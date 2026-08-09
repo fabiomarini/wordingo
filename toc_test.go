@@ -199,8 +199,8 @@ func TestAddTableOfContentsStructure(t *testing.T) {
 		if len(hlRuns) >= 4 && hlRuns[2].FldChar == nil {
 			t.Errorf("entry[%d] PAGEREF field not inside hyperlink", i)
 		}
-		if len(ep.R) != 0 {
-			t.Errorf("entry[%d] has %d direct runs; all entry content must live in the hyperlink", i, len(ep.R))
+		if i < 3 && len(ep.R) != 0 {
+			t.Errorf("entry[%d] has %d direct runs; entry content must live in the hyperlink", i, len(ep.R))
 		}
 		// Right tab with dot leader; left indent grows with level.
 		if ep.PPr == nil || ep.PPr.Tabs == nil || len(ep.PPr.Tabs.Tab) != 1 {
@@ -219,8 +219,10 @@ func TestAddTableOfContentsStructure(t *testing.T) {
 		}
 	}
 
-	// Last entry closes the TOC field: the closing character is the
-	// final run inside the last entry's hyperlink, after the PAGEREF end.
+	// The TOC field is closed by a direct run after the last entry's
+	// hyperlink (Word's canonical placement — never inside the
+	// hyperlink). Entries 0..2 contain only the PAGEREF field; the last
+	// entry additionally carries the closing character in R.
 	for i := 0; i < 4; i++ {
 		hl := entries[i].X().Hyperlink[0]
 		ends := 0
@@ -229,13 +231,16 @@ func TestAddTableOfContentsStructure(t *testing.T) {
 				ends++
 			}
 		}
-		want := 1 // the PAGEREF field's own end
-		if i == 3 {
-			want = 2 // plus the closing character of the TOC field
+		if ends != 1 {
+			t.Errorf("entry[%d] hyperlink has %d end field chars, want 1 (PAGEREF)", i, ends)
 		}
-		if ends != want {
-			t.Errorf("entry[%d] has %d end field chars, want %d", i, ends, want)
-		}
+	}
+	last := entries[3].X()
+	if !last.HyperlinkFirst {
+		t.Error("last entry must marshal its hyperlink before the closing run")
+	}
+	if len(last.R) != 1 || last.R[0].FldChar == nil || last.R[0].FldChar.Type == nil || *last.R[0].FldChar.Type != "end" {
+		t.Errorf("last entry R = %+v, want a single TOC end field char", last.R)
 	}
 
 	// Headings carry matching bookmarks.
@@ -494,6 +499,12 @@ func TestTOCRoundTrip(t *testing.T) {
 	}
 	if len(paras[2].X().BookmarkStart) != 1 {
 		t.Error("heading bookmark lost on round trip")
+	}
+	// Word-open structure: the TOC field's closing character must be a
+	// direct run after the last entry's hyperlink — never inside it.
+	docxml := string(parts["word/document.xml"])
+	if !strings.Contains(docxml, `</w:hyperlink><w:r><w:fldChar w:fldCharType="end">`) {
+		t.Error("TOC field end must be a direct run after the last hyperlink (Word rejects it inside)")
 	}
 	// Warnings: TOC must not introduce unknown-style noise.
 	if ws := re.Warnings(); len(ws) != 0 {

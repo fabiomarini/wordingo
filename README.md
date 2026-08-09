@@ -321,7 +321,16 @@ Requires Go 1.23+.
 
 ## Status
 
-v0.1.0 covers: create/open/save, templates, paragraphs and runs, named styles, formatting, tables, images, headers/footers, lists, hyperlinks, page setup, template merge, edit operations, text extraction, and Markdown round-trip.
+v0.1.1 covers: create/open/save, templates, paragraphs and runs, named styles, formatting, tables, images, headers/footers, lists (Word-canonical numbering), hyperlinks, page setup, template merge, edit operations, table of contents from the document's headings, text extraction, and Markdown round-trip.
+
+What's new in v0.1.1:
+- **Table of contents** — `Headings()`, `AddTableOfContents()`, `InsertTableOfContentsBefore()` generate a live Word TOC field with navigable entries from the document's own headings
+- **Word-faithful lists** — numbering definitions now match Word's own output (schema-ordered levels, `hybridMultilevel`, `nsid`/`tmpl`), so bullets and numbers render reliably
+- **Deterministic output** — re-encoded XML parts are byte-reproducible
+- **File lifecycle fixes** — `Open(path)` keeps the source file for lazy part copies until `Close()`; saving over the open source file is rejected
+- **Round-trip fidelity** — paragraph-mark run properties and extension namespaces (`mc:Ignorable`) survive re-encoding
+
+See [RELEASE-v0.1.1.md](RELEASE-v0.1.1.md) for the full changelog.
 
 ## License
 

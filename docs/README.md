@@ -9,4 +9,4 @@
 | [document-structure.md](document-structure.md) | Headers, footers, page setup, body iteration |
 | [templates-and-merge.md](templates-and-merge.md) | FromTemplate, OpenTemplate, placeholder merge, edit operations |
 | [text-and-markdown.md](text-and-markdown.md) | ExtractText, ToMarkdown, CreateFromMarkdown, ImportMarkdown |
-| [api-reference.md](api-reference.md) | Complete method/type/constant reference |
+| [api-reference.md](api-reference.md) | Complete method/type/constant reference (incl. `Headings`, `AddTableOfContents`, `TOCOptions`) |

@@ -13,17 +13,27 @@ import (
 
 // Open reads an existing .docx file from path and returns a Document
 // with the body parsed eagerly. Supporting parts remain lazy.
+//
+// The source file stays open until Document.Close (Save copies
+// unmodified parts lazily from the original archive), so call Close
+// when the document is no longer needed.
 func Open(path string) (*Document, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("wordingo: open %s: %w", path, err)
 	}
-	defer f.Close()
 	fi, err := f.Stat()
 	if err != nil {
+		f.Close()
 		return nil, fmt.Errorf("wordingo: stat %s: %w", path, err)
 	}
-	return OpenReader(f, fi.Size())
+	d, err := OpenReader(f, fi.Size())
+	if err != nil {
+		f.Close()
+		return nil, err
+	}
+	d.file = f
+	return d, nil
 }
 
 // OpenReader reads a .docx from r with the given size and returns a

@@ -49,6 +49,7 @@ func (cw *countWriter) Write(p []byte) (int, error) {
 type Document struct {
 	pkg           *opc.Package
 	doc           *wml.CT_Document
+	file          *os.File // source file kept open for lazy part copies (Open only)
 	dirty         bool
 	warnings      []string
 	nextImageID   int64
@@ -89,6 +90,14 @@ func (d *Document) WriteTo(w io.Writer) (int64, error) {
 
 // Save writes the document to a file at path.
 func (d *Document) Save(path string) error {
+	// Saving over the still-open source file would truncate it while
+	// opc.Save lazily copies the original parts from the same handle.
+	if d.file != nil {
+		same, err := sameFile(d.file, path)
+		if err == nil && same {
+			return fmt.Errorf("wordingo: save %s: target is the open source document; save to a different path", path)
+		}
+	}
 	f, err := os.Create(path)
 	if err != nil {
 		return err
@@ -96,6 +105,20 @@ func (d *Document) Save(path string) error {
 	defer f.Close()
 	_, err = d.WriteTo(f)
 	return err
+}
+
+// sameFile reports whether f and path refer to the same file. It
+// returns an error only when path cannot be statted (e.g. a new file).
+func sameFile(f *os.File, path string) (bool, error) {
+	fi, err := f.Stat()
+	if err != nil {
+		return false, err
+	}
+	other, err := os.Stat(path)
+	if err != nil {
+		return false, err
+	}
+	return os.SameFile(fi, other), nil
 }
 
 // SaveFile writes the document to a file at path.
@@ -326,9 +349,13 @@ func (d *Document) DeleteParagraph(target *Paragraph) {
 	d.warn("wordingo: DeleteParagraph: target paragraph not found")
 }
 
-// Close releases package and document references. The Document is
-// not usable after Close.
+// Close releases package, document, and source-file references. The
+// Document is not usable after Close.
 func (d *Document) Close() error {
+	if d.file != nil {
+		d.file.Close()
+		d.file = nil
+	}
 	d.pkg = nil
 	d.doc = nil
 	return nil

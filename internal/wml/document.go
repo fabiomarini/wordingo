@@ -216,7 +216,6 @@ type CT_PPr struct {
 	SectPr        *CT_SectPr       `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main sectPr"`
 	Shd           *CT_Shd          `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main shd"`
 	OutlineLvl    *CT_OutlineLvl   `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main outlineLvl"`
-	RPr           *CT_RPr          `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main rPr"`
 	Raw           []xmlutil.RawXML `xml:",any"`
 }
 

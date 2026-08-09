@@ -416,7 +416,7 @@ func tocNoProofRPr() *wml.CT_RPr {
 
 // tocTitleParagraph builds the first TOC paragraph: field begin
 // (dirty), the TOC instruction, field separate, and the cached title
-// text.
+// text (bold, 16pt).
 func tocTitleParagraph(title, instr string) *wml.CT_P {
 	before, after := int64(240), int64(120)
 	dirty := "true"
@@ -424,7 +424,6 @@ func tocTitleParagraph(title, instr string) *wml.CT_P {
 	return &wml.CT_P{
 		PPr: &wml.CT_PPr{
 			Spacing: &wml.CT_Spacing{Before: &before, After: &after},
-			RPr:     rpr,
 		},
 		R: []*wml.CT_R{
 			{FldChar: &wml.CT_FldChar{Type: strPtr("begin"), Dirty: &dirty}},
@@ -467,6 +466,10 @@ func tocEntryParagraph(level int, text, anchor string, tabPos int64, closeTOC bo
 		},
 	}
 
+	// Note: the pPr deliberately carries no w:rPr (paragraph-mark run
+	// properties). Word documents hide formatting there that our WML
+	// structs would drop on re-encode, so the field stays hoarded as
+	// Raw; the visible entry formatting lives in the run properties.
 	p := &wml.CT_P{
 		PPr: &wml.CT_PPr{
 			Spacing: &wml.CT_Spacing{Before: &zero, After: &zero},
@@ -476,7 +479,6 @@ func tocEntryParagraph(level int, text, anchor string, tabPos int64, closeTOC bo
 				Leader: strPtr("dot"),
 				Pos:    &tabPos,
 			}}},
-			RPr: nop,
 		},
 		Hyperlink: []*wml.CT_Hyperlink{hl},
 	}

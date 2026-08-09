@@ -352,3 +352,57 @@ func readZipEntryFromBuf(t *testing.T, data []byte, name string) string {
 	t.Fatalf("part %s not found", name)
 	return ""
 }
+
+// TestList_WordCanonicalNumbering verifies the generated numbering.xml
+// matches Word's own structure: abstractNum definitions before num
+// instances, nsid/multiLevelType/tmpl on every abstractNum, and levels
+// with schema-ordered children (start, numFmt, lvlText, lvlJc, pPr).
+func TestList_WordCanonicalNumbering(t *testing.T) {
+	doc, err := Create()
+	if err != nil {
+		t.Fatal(err)
+	}
+	doc.AddListFromSlice([]string{"A", "B"}, false)
+	doc.AddListFromSlice([]string{"1", "2"}, true)
+
+	var buf bytes.Buffer
+	if _, err := doc.WriteTo(&buf); err != nil {
+		t.Fatal(err)
+	}
+	nb := readZipEntryFromBuf(t, buf.Bytes(), "word/numbering.xml")
+
+	// abstractNum definitions must precede num instances (Word's order;
+	// parsers that resolve abstractNumId while reading w:num fail when
+	// the definition comes later).
+	absIdx := strings.Index(nb, "<w:abstractNum")
+	numIdx := strings.Index(nb, "<w:num ")
+	if absIdx == -1 || numIdx == -1 || absIdx > numIdx {
+		t.Errorf("expected abstractNum before num (abs=%d num=%d)", absIdx, numIdx)
+	}
+
+	// Every abstractNum carries nsid, hybridMultilevel, and tmpl.
+	if !strings.Contains(nb, `w:multiLevelType w:val="hybridMultilevel"`) {
+		t.Error("numbering.xml missing multiLevelType hybridMultilevel")
+	}
+	if !strings.Contains(nb, "<w:nsid w:val=") {
+		t.Error("numbering.xml missing nsid")
+	}
+	if !strings.Contains(nb, "<w:tmpl w:val=") {
+		t.Error("numbering.xml missing tmpl")
+	}
+
+	// Level children follow schema order: start before numFmt, lvlJc and
+	// indentation present on every level.
+	if !strings.Contains(nb, "<w:start w:val=\"1\"></w:start><w:numFmt") {
+		t.Error("level children out of schema order (start must precede numFmt)")
+	}
+	if !strings.Contains(nb, `w:lvlJc w:val="left"`) {
+		t.Error("numbering.xml missing lvlJc")
+	}
+	if !strings.Contains(nb, `w:ind w:left="720" w:hanging="360"`) {
+		t.Error("level 0 missing Word-style hanging indent")
+	}
+	if !strings.Contains(nb, `w:ind w:left="1440" w:hanging="360"`) {
+		t.Error("level 1 missing Word-style hanging indent")
+	}
+}

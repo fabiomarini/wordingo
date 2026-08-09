@@ -153,6 +153,9 @@ func findMaxNumID(nb *wml.CT_Numbering) int64 {
 
 // makeLevels generates 9 CT_Lvl entries (levels 0-8) for either ordered
 // (decimal, "%N.") or bulleted (bullet chars per level) numbering.
+// Levels match Word's own output: schema-ordered children (start,
+// numFmt, lvlText, lvlJc, pPr), left-justified, with a hanging indent
+// that grows 720 twips per level.
 func makeLevels(ordered bool) []*wml.CT_Lvl {
 	bulletChars := []string{
 		"\u2022", "\u25E6", "\u25AA", "\u25AB",
@@ -163,9 +166,17 @@ func makeLevels(ordered bool) []*wml.CT_Lvl {
 	for i := 0; i < 9; i++ {
 		ilvl := int64(i)
 		startOne := int64(1)
+		indLeft := int64(720 + i*720)
+		indHanging := int64(360)
+		jcLeft := "left"
 		lvl := &wml.CT_Lvl{
 			ILvl:  &ilvl,
 			Start: &wml.CT_Start{Val: &startOne},
+			LvlJc: &wml.CT_LvlJc{Val: &jcLeft},
+			PPr: &wml.CT_PPr{Ind: &wml.CT_Ind{
+				Left:    &indLeft,
+				Hanging: &indHanging,
+			}},
 		}
 		if ordered {
 			numFmt := "decimal"
@@ -180,6 +191,24 @@ func makeLevels(ordered bool) []*wml.CT_Lvl {
 		levels[i] = lvl
 	}
 	return levels
+}
+
+// newAbstractNum wraps levels in a Word-complete abstract numbering
+// definition: nsid, hybridMultilevel, and tmpl elements in schema
+// position before the levels (Word writes these on every abstractNum).
+// The hex ids are derived deterministically from the abstractNumId so
+// output stays byte-reproducible.
+func newAbstractNum(absID int64, levels []*wml.CT_Lvl) *wml.CT_AbstractNum {
+	nsid := fmt.Sprintf("%08X", uint32(0x20000000)+uint32(absID))
+	tmpl := fmt.Sprintf("%08X", uint32(0x40000000)+uint32(absID))
+	hybrid := "hybridMultilevel"
+	return &wml.CT_AbstractNum{
+		AbstractNumID:  &absID,
+		Nsid:           &wml.CT_DecimalNumber{Val: &nsid},
+		MultiLevelType: &wml.CT_MultiLevelType{Val: &hybrid},
+		Tmpl:           &wml.CT_DecimalNumber{Val: &tmpl},
+		Lvl:            levels,
+	}
 }
 
 // AddList creates a new ordered or bulleted list with auto-generated
@@ -201,10 +230,7 @@ func (d *Document) AddList(ordered bool) *ListBuilder {
 	nextAbsID := findMaxAbstractNumID(nb)
 	nextNumID := findMaxNumID(nb)
 
-	absNum := &wml.CT_AbstractNum{
-		AbstractNumID: &nextAbsID,
-		Lvl:           makeLevels(ordered),
-	}
+	absNum := newAbstractNum(nextAbsID, makeLevels(ordered))
 	nb.AbstractNum = append(nb.AbstractNum, absNum)
 
 	num := &wml.CT_Num{
@@ -255,16 +281,13 @@ func (d *Document) AddNumberingDef(numFmt string, start int) *ListBuilder {
 		text := fmt.Sprintf("%%%d.", i+1)
 		levels[i] = &wml.CT_Lvl{
 			ILvl:    &ilvl,
+			Start:   &wml.CT_Start{Val: &startVal},
 			NumFmt:  &wml.CT_NumFmt{Val: &numFmt},
 			LvlText: &wml.CT_LvlText{Val: &text},
-			Start:   &wml.CT_Start{Val: &startVal},
 		}
 	}
 
-	absNum := &wml.CT_AbstractNum{
-		AbstractNumID: &nextAbsID,
-		Lvl:           levels,
-	}
+	absNum := newAbstractNum(nextAbsID, levels)
 	nb.AbstractNum = append(nb.AbstractNum, absNum)
 
 	num := &wml.CT_Num{

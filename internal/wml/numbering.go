@@ -6,20 +6,37 @@ import (
 	"github.com/fabiomarini/wordingo/internal/xmlutil"
 )
 
-// CT_Numbering is the root element of word/numbering.xml.
+// CT_Numbering is the root element of word/numbering.xml. AbstractNum
+// elements are marshaled before Num elements (ISO §17.9.8 sequence).
 type CT_Numbering struct {
 	XMLName     xml.Name          `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main numbering"`
-	Num         []*CT_Num         `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main num"`
 	AbstractNum []*CT_AbstractNum `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main abstractNum"`
+	Num         []*CT_Num         `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main num"`
 	Raw         []xmlutil.RawXML  `xml:",any"`
 }
 
 // CT_AbstractNum is an abstract numbering definition.
 type CT_AbstractNum struct {
-	XMLName       xml.Name        `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main abstractNum"`
-	AbstractNumID *int64          `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main abstractNumId,attr,omitempty"`
-	Lvl           []*CT_Lvl       `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main lvl"`
-	Raw           []xmlutil.RawXML `xml:",any"`
+	XMLName        xml.Name          `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main abstractNum"`
+	AbstractNumID  *int64            `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main abstractNumId,attr,omitempty"`
+	Nsid           *CT_DecimalNumber `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main nsid"`
+	MultiLevelType *CT_MultiLevelType `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main multiLevelType"`
+	Tmpl           *CT_DecimalNumber `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main tmpl"`
+	Lvl            []*CT_Lvl         `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main lvl"`
+	Raw            []xmlutil.RawXML  `xml:",any"`
+}
+
+// CT_DecimalNumber is a hex or decimal value element (w:nsid, w:tmpl).
+// No XMLName — the containing struct's field tag provides the element
+// name ("nsid" or "tmpl").
+type CT_DecimalNumber struct {
+	Val *string `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main val,attr,omitempty"`
+}
+
+// CT_MultiLevelType is the list type element (w:multiLevelType).
+// No XMLName — the containing CT_AbstractNum field tag provides it.
+type CT_MultiLevelType struct {
+	Val *string `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main val,attr,omitempty"`
 }
 
 // CT_Num is a numbering instance (w:num).
@@ -57,13 +74,15 @@ type CT_AbstractNumID struct {
 	Val     *int64   `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main val,attr,omitempty"`
 }
 
-// CT_Lvl is a numbering level definition.
+// CT_Lvl is a numbering level definition. Fields are declared in ISO
+// §17.9.6 sequence: start, numFmt, lvlText, lvlJc, pPr, rPr.
 type CT_Lvl struct {
 	XMLName xml.Name    `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main lvl"`
 	ILvl    *int64      `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main ilvl,attr,omitempty"`
+	Start   *CT_Start   `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main start"`
 	NumFmt  *CT_NumFmt  `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main numFmt"`
 	LvlText *CT_LvlText `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main lvlText"`
-	Start   *CT_Start   `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main start"`
+	LvlJc   *CT_LvlJc   `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main lvlJc"`
 	PPr     *CT_PPr     `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main pPr"`
 	RPr     *CT_RPr     `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main rPr"`
 	Raw     []xmlutil.RawXML `xml:",any"`
@@ -72,6 +91,12 @@ type CT_Lvl struct {
 // CT_NumFmt is a numbering format (decimal, upperRoman, bullet, etc.).
 type CT_NumFmt struct {
 	XMLName xml.Name `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main numFmt"`
+	Val     *string  `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main val,attr,omitempty"`
+}
+
+// CT_LvlJc is the numbering level justification (w:lvlJc).
+type CT_LvlJc struct {
+	XMLName xml.Name `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main lvlJc"`
 	Val     *string  `xml:"http://schemas.openxmlformats.org/wordprocessingml/2006/main val,attr,omitempty"`
 }
 

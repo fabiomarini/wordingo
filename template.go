@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
 
 	"github.com/fabiomarini/wordingo/internal/opc"
 	"github.com/fabiomarini/wordingo/internal/style"
@@ -14,10 +13,19 @@ import (
 )
 
 // FromTemplate opens a .docx template from path, clones its style
-// dependency graph (styles, numbering, fontTable, theme, settings),
-// and returns a Document with an empty body (one section, no
-// paragraphs).  Style parts are never touched after CloneStyles
-// (D-06).  Use when you want template styles but a clean body.
+// dependency graph (styles, numbering, fontTable, theme, settings) AND
+// its letterhead — header/footer parts, their own relationship graphs,
+// and the media (logos) they reference — and returns a Document with
+// an empty body carrying the template's section properties.
+//
+// This is the "brand shell" semantics REFACTOR-HARNESS §3.3 requires:
+// the look of a base template (styles + logo'd headers/footers + page
+// geometry) with NONE of its example content. Style parts are never
+// touched after CloneStyles (D-06).
+//
+// The Document's header/footer/image allocation counters start past
+// the cloned parts, so AddHeader/AddImage on the result cannot
+// overwrite the letterhead.
 func FromTemplate(path string) (*Document, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -43,9 +51,32 @@ func FromTemplateReader(r io.ReaderAt, size int64) (*Document, error) {
 		return nil, fmt.Errorf("wordingo: clone styles: %w", err)
 	}
 
-	// FromTemplate clears body entirely — never modifies in place
-	// (Pitfall 3: replace body, never edit existing one).
-	dst.MarkModified("word/document.xml", buildEmptyBodyXML())
+	// Read the source sectPr (letterhead references, page geometry).
+	srcPart, ok := src.Parts["word/document.xml"]
+	if !ok {
+		return nil, fmt.Errorf("wordingo: template missing word/document.xml: %w", opc.ErrInvalidPackage)
+	}
+	rc, err := srcPart.Open()
+	if err != nil {
+		return nil, fmt.Errorf("wordingo: open template document.xml: %w", err)
+	}
+	defer rc.Close()
+	var srcDoc wml.CT_Document
+	dec := xmlutil.NewSafeDecoder(rc, opc.MaxPartBytes)
+	if err := dec.Decode(&srcDoc); err != nil {
+		return nil, fmt.Errorf("wordingo: decode template body: %w", err)
+	}
+
+	var srcSectPr *wml.CT_SectPr
+	if srcDoc.Body != nil {
+		srcSectPr = srcDoc.Body.SectPr
+	}
+	sectPr, counters := cloneLetterhead(src, dst, srcSectPr)
+
+	// FromTemplate clears body content entirely — never modifies in
+	// place (Pitfall 3: replace body, never edit existing one) — but
+	// keeps the cloned letterhead's section properties.
+	dst.MarkModified("word/document.xml", emptyBodyXMLWithSectPr(sectPr))
 
 	doc, err := parseDocument(dst)
 	if err != nil {
@@ -54,20 +85,18 @@ func FromTemplateReader(r io.ReaderAt, size int64) (*Document, error) {
 	d := &Document{
 		pkg:          dst,
 		doc:          doc,
-		nextImageID:  1,
-		nextHeaderID: 1,
-		nextFooterID: 1,
+		nextImageID:  counters.nextImage,
+		nextHeaderID: counters.nextHeader,
+		nextFooterID: counters.nextFooter,
 	}
 	d.syncBodyOrder()
 	return d, nil
 }
 
 // OpenTemplate opens a .docx template from path, clones its style
-// dependency graph, and returns a Document with the template's
-// existing body content preserved (paragraphs and tables).  Header
-// and footer references in sectPr are stripped (Pitfall 4 — cloned
-// package has fresh rIds that would dangle).  Headers/footers
-// themselves are not cloned in Phase 3 (deferred to Phase 5).
+// dependency graph, preserves the template's existing body content
+// (paragraphs and tables), and clones the letterhead (headers/footers
+// with their images) via the same path FromTemplate uses (D-13).
 func OpenTemplate(path string) (*Document, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -93,13 +122,6 @@ func OpenTemplateReader(r io.ReaderAt, size int64) (*Document, error) {
 		return nil, fmt.Errorf("wordingo: clone styles: %w", err)
 	}
 
-	srcRels := src.Rels["word/document.xml"]
-	dstRels := dst.Rels["word/document.xml"]
-	if dstRels == nil {
-		dstRels = &opc.Relationships{}
-		dst.Rels["word/document.xml"] = dstRels
-	}
-
 	// Read source body content.
 	srcPart, ok := src.Parts["word/document.xml"]
 	if !ok {
@@ -117,103 +139,24 @@ func OpenTemplateReader(r io.ReaderAt, size int64) (*Document, error) {
 		return nil, fmt.Errorf("wordingo: decode template body: %w", err)
 	}
 
-	// Clone header/footer parts referenced in source sectPr (D-13,
-	// reverse Phase 3 Pitfall 4).  Allocate fresh rIds via dstRels
-	// to avoid collisions (T-05-05).
-	srcSectPr := srcDoc.Body.SectPr
-	sectPr := defaultSectPr()
-
-	if srcSectPr != nil {
-		// Clone header references.
-		for _, ref := range srcSectPr.HdrFtrRef {
-			if srcRels == nil {
-				continue
-			}
-			srcRel := findRelByID(srcRels, ref.ID)
-			if srcRel == nil {
-				continue
-			}
-			target := path.Join("word", srcRel.Target)
-			srcPart, ok := src.Parts[target]
-			if !ok {
-				continue
-			}
-			partBytes, err := readPartBytes(srcPart)
-			if err != nil {
-				continue
-			}
-
-			// Copy header part to dst with fresh rId.
-			dst.MarkModified(target, partBytes)
-			dst.ContentTypes.Overrides["/"+target] = ctHeader
-			newID := dstRels.NextRID()
-			dstRels.Rels = append(dstRels.Rels, opc.Relationship{
-				ID:     newID,
-				Type:   relHeader,
-				Target: srcRel.Target,
-			})
-
-			sectPr.HdrFtrRef = append(sectPr.HdrFtrRef, &wml.CT_HdrFtrRef{
-				ID:   newID,
-				Type: ref.Type,
-			})
-		}
-
-		// Clone footer references.
-		for _, ref := range srcSectPr.FtrRef {
-			if srcRels == nil {
-				continue
-			}
-			srcRel := findRelByID(srcRels, ref.ID)
-			if srcRel == nil {
-				continue
-			}
-			target := path.Join("word", srcRel.Target)
-			srcPart, ok := src.Parts[target]
-			if !ok {
-				continue
-			}
-			partBytes, err := readPartBytes(srcPart)
-			if err != nil {
-				continue
-			}
-
-			dst.MarkModified(target, partBytes)
-			dst.ContentTypes.Overrides["/"+target] = ctFooter
-			newID := dstRels.NextRID()
-			dstRels.Rels = append(dstRels.Rels, opc.Relationship{
-				ID:     newID,
-				Type:   relFooter,
-				Target: srcRel.Target,
-			})
-
-			sectPr.FtrRef = append(sectPr.FtrRef, &wml.CT_HdrFtrRef{
-				ID:   newID,
-				Type: ref.Type,
-			})
-		}
-
-		// Preserve TitlePg if source has it.
-		sectPr.TitlePg = srcSectPr.TitlePg
+	// Clone header/footer parts + their media (D-13).
+	var srcSectPr *wml.CT_SectPr
+	if srcDoc.Body != nil {
+		srcSectPr = srcDoc.Body.SectPr
 	}
+	sectPr, counters := cloneLetterhead(src, dst, srcSectPr)
 
-	// Re-use source PgSz/PgMar (if present) instead of defaults.
-	if srcSectPr != nil {
-		if srcSectPr.PgSz != nil {
-			sectPr.PgSz = srcSectPr.PgSz
-		}
-		if srcSectPr.PgMar != nil {
-			sectPr.PgMar = srcSectPr.PgMar
-		}
-	}
-
-	freshDoc := &wml.CT_Document{
-		Body: &wml.CT_Body{
+	var body *wml.CT_Body
+	if srcDoc.Body != nil {
+		body = &wml.CT_Body{
 			P:      srcDoc.Body.P,
 			Tbl:    srcDoc.Body.Tbl,
 			SectPr: sectPr,
-		},
+		}
+	} else {
+		body = &wml.CT_Body{SectPr: sectPr}
 	}
+	freshDoc := &wml.CT_Document{Body: body}
 
 	var buf bytes.Buffer
 	buf.WriteString(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`)
@@ -234,9 +177,9 @@ func OpenTemplateReader(r io.ReaderAt, size int64) (*Document, error) {
 	d := &Document{
 		pkg:          dst,
 		doc:          doc,
-		nextImageID:  1,
-		nextHeaderID: 1,
-		nextFooterID: 1,
+		nextImageID:  counters.nextImage,
+		nextHeaderID: counters.nextHeader,
+		nextFooterID: counters.nextFooter,
 	}
 	d.syncBodyOrder()
 	return d, nil

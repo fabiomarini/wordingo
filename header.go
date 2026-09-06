@@ -110,6 +110,32 @@ func (h *Header) AddParagraph(text string) *Paragraph {
 	return &Paragraph{ct: ct, doc: h.doc}
 }
 
+// AddImageBytes embeds an image as a DrawingML run appended to the
+// header's last paragraph (creating one when empty), registering the
+// relationship in the HEADER part's own .rels graph — the same shape
+// cloneLetterhead carries for a template's logo'd letterhead.
+func (h *Header) AddImageBytes(name string, data []byte, ct string) (*Run, error) {
+	if h == nil {
+		panic("wordingo: AddImageBytes called on nil Header")
+	}
+	lastP := h.lastParagraph()
+	r, err := h.doc.addImageRun(h.partName, name, data, ct, lastP)
+	if err != nil {
+		return nil, err
+	}
+	h.sync()
+	return &Run{ct: r, para: &Paragraph{ct: lastP, doc: h.doc}}, nil
+}
+
+// lastParagraph returns the header's last paragraph, creating one when
+// the header is empty.
+func (h *Header) lastParagraph() *wml.CT_P {
+	if len(h.ct.P) == 0 {
+		h.ct.P = append(h.ct.P, &wml.CT_P{})
+	}
+	return h.ct.P[len(h.ct.P)-1]
+}
+
 func (f *Footer) Paragraphs() []*Paragraph {
 	if f == nil {
 		panic("wordingo: Paragraphs called on nil Footer")
@@ -171,6 +197,31 @@ func (f *Footer) AddParagraph(text string) *Paragraph {
 	f.ct.P = append(f.ct.P, ct)
 	f.sync()
 	return &Paragraph{ct: ct, doc: f.doc}
+}
+
+// AddImageBytes embeds an image as a DrawingML run appended to the
+// footer's last paragraph (creating one when empty), registering the
+// relationship in the FOOTER part's own .rels graph.
+func (f *Footer) AddImageBytes(name string, data []byte, ct string) (*Run, error) {
+	if f == nil {
+		panic("wordingo: AddImageBytes called on nil Footer")
+	}
+	lastP := f.lastParagraph()
+	r, err := f.doc.addImageRun(f.partName, name, data, ct, lastP)
+	if err != nil {
+		return nil, err
+	}
+	f.sync()
+	return &Run{ct: r, para: &Paragraph{ct: lastP, doc: f.doc}}, nil
+}
+
+// lastParagraph returns the footer's last paragraph, creating one when
+// the footer is empty.
+func (f *Footer) lastParagraph() *wml.CT_P {
+	if len(f.ct.P) == 0 {
+		f.ct.P = append(f.ct.P, &wml.CT_P{})
+	}
+	return f.ct.P[len(f.ct.P)-1]
 }
 
 // addHelperPart creates a new OPC part in the document package and adds

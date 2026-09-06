@@ -205,8 +205,31 @@ func (d *Document) AddImageBytes(name string, data []byte, ct string) (*Run, err
 	if d == nil {
 		panic("wordingo: AddImageBytes called on nil Document")
 	}
+	r, err := d.addImageRun("word/document.xml", name, data, ct, d.bodyLastParagraph())
+	if err != nil {
+		return nil, err
+	}
+	lastP := d.bodyLastParagraph()
+
+	// Ensure at least a Tbl slice for body
+	if d.doc.Body.Tbl == nil {
+		d.doc.Body.Tbl = []*wml.CT_Tbl{}
+	}
+
+	d.dirty = true
+	return &Run{ct: r, para: &Paragraph{ct: lastP, doc: d}}, nil
+}
+
+// addImageRun allocates the media part + relationship against the given
+// source part (relSource: "word/document.xml" or a header/footer part
+// name) and appends the DrawingML run to targetP, the caller's last
+// paragraph. Shared by AddImageBytes and Header/Footer AddImageBytes.
+func (d *Document) addImageRun(relSource, name string, data []byte, ctype string, targetP *wml.CT_P) (*wml.CT_R, error) {
 	if len(data) == 0 {
 		return nil, fmt.Errorf("wordingo: AddImageBytes: empty image data")
+	}
+	if targetP == nil {
+		return nil, fmt.Errorf("wordingo: AddImageBytes: nil target paragraph")
 	}
 
 	// Determine extension
@@ -221,13 +244,13 @@ func (d *Document) AddImageBytes(name string, data []byte, ct string) (*Run, err
 	d.pkg.MarkModified(mediaPath, data)
 
 	// Add content type override
-	d.pkg.ContentTypes.Overrides["/"+mediaPath] = ct
+	d.pkg.ContentTypes.Overrides["/"+mediaPath] = ctype
 
-	// Add relationship from document.xml to media
-	rels := d.pkg.Rels["word/document.xml"]
+	// Add relationship from the source part to media
+	rels := d.pkg.Rels[relSource]
 	if rels == nil {
 		rels = &opc.Relationships{}
-		d.pkg.Rels["word/document.xml"] = rels
+		d.pkg.Rels[relSource] = rels
 	}
 	relID := rels.NextRID()
 	rels.Rels = append(rels.Rels, opc.Relationship{
@@ -266,23 +289,20 @@ func (d *Document) AddImageBytes(name string, data []byte, ct string) (*Run, err
 	// Create run with drawing
 	r := &wml.CT_R{Drawing: drawing}
 
-	// Append to last paragraph
+	targetP.R = append(targetP.R, r)
+	return r, nil
+}
+
+// bodyLastParagraph returns the body's last paragraph, creating the
+// body and an empty paragraph when needed.
+func (d *Document) bodyLastParagraph() *wml.CT_P {
 	if d.doc.Body == nil {
 		d.doc.Body = &wml.CT_Body{SectPr: defaultSectPr()}
 	}
 	if len(d.doc.Body.P) == 0 {
 		d.doc.Body.AppendP(&wml.CT_P{})
 	}
-	lastP := d.doc.Body.P[len(d.doc.Body.P)-1]
-	lastP.R = append(lastP.R, r)
-
-	// Ensure at least a Tbl slice for body
-	if d.doc.Body.Tbl == nil {
-		d.doc.Body.Tbl = []*wml.CT_Tbl{}
-	}
-
-	d.dirty = true
-	return &Run{ct: r, para: &Paragraph{ct: lastP, doc: d}}, nil
+	return d.doc.Body.P[len(d.doc.Body.P)-1]
 }
 
 // computeImageSize returns default EMU dimensions for an image.

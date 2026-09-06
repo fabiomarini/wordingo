@@ -288,18 +288,30 @@ func (p *Package) Save(w io.Writer) error {
 	}
 
 	// Serialized overrides: content types + every relationship set.
+	// A relationship source part that lives only in the Rels map (no
+	// explicit Parts entry — e.g. a header's .rels graph populated at
+	// clone time) must still be emitted; the rels part is implied by
+	// its live source.
 	overrides := make(map[string][]byte, len(p.Rels)+1)
+	impliedRels := make([]string, 0, len(p.Rels))
 	ctBytes, err := p.ContentTypes.serialize()
 	if err != nil {
 		return err
 	}
 	overrides["[Content_Types].xml"] = ctBytes
 	for src, rs := range p.Rels {
+		if src != "" && !live[src] {
+			continue // source part deleted: its rels go with it
+		}
 		b, err := rs.serialize()
 		if err != nil {
 			return err
 		}
-		overrides[relsPathFor(src)] = b
+		relsName := relsPathFor(src)
+		overrides[relsName] = b
+		if !live[relsName] {
+			impliedRels = append(impliedRels, relsName)
+		}
 	}
 
 	// Buffer everything: validation/serialization failures must never
@@ -307,10 +319,11 @@ func (p *Package) Save(w io.Writer) error {
 	var buf bytes.Buffer
 	zw := zip.NewWriter(&buf)
 
-	names := make([]string, 0, len(live))
+	names := make([]string, 0, len(live)+len(impliedRels))
 	for name := range live {
 		names = append(names, name)
 	}
+	names = append(names, impliedRels...)
 	for _, name := range CanonicalOrder(names) {
 		part := p.Parts[name]
 		if payload, ok := overrides[name]; ok {

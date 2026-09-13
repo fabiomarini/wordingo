@@ -299,9 +299,13 @@ func parseInlines(text string) []InlineSpan {
 		}
 
 		if bestMatch == -1 {
-			spans = append(spans, InlineSpan{Text: string(text[pos])})
-			pos++
-			continue
+			// No inline syntax remains: the rest is literal text.
+			// Emitting it as one span keeps multi-byte UTF-8 intact —
+			// the old per-byte path (string(text[pos])) re-encoded
+			// every byte as its own rune, producing mojibake
+			// ("è" -> "Ã¨") and one run per character.
+			spans = append(spans, InlineSpan{Text: text[pos:]})
+			break
 		}
 
 		if bestMatch > pos {

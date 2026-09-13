@@ -292,3 +292,26 @@ func TestParseCommentInline(t *testing.T) {
 		t.Fatalf("Parse comment: expected BlockParagraph")
 	}
 }
+
+// Regression: the no-inline-match fallback used to emit one span per
+// BYTE via string(text[pos]), which re-encoded every multi-byte UTF-8
+// character as mojibake ("è" -> "Ã¨", "–" -> "â€") and exploded runs.
+func TestParseUTF8PlainTextKeepsSpansAndBytes(t *testing.T) {
+	cases := []struct{ input, want string }{
+		{"La stima è espressa – con cura", "La stima è espressa – con cura"},
+		{"Grassetto **bold** e poi è – ancora", "Grassetto bold e poi è – ancora"},
+	}
+	for _, c := range cases {
+		blocks, err := Parse(c.input)
+		if err != nil {
+			t.Fatalf("Parse %q: %v", c.input, err)
+		}
+		var got strings.Builder
+		for _, s := range blocks[0].Inlines {
+			got.WriteString(s.Text)
+		}
+		if got.String() != c.want {
+			t.Errorf("inline text = %q, want %q", got.String(), c.want)
+		}
+	}
+}

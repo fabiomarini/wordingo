@@ -18,14 +18,15 @@ const (
 )
 
 type Block struct {
-	Type      BlockType
-	Level     int
-	Content   string
-	Lines     []string
-	Cells     [][]string
-	Language  string
-	ListItems []Block
-	Inlines   []InlineSpan
+	Type        BlockType
+	Level       int
+	Content     string
+	Lines       []string
+	Cells       [][]string
+	Language    string
+	ListItems   []Block
+	Inlines     []InlineSpan
+	CellInlines [][][]InlineSpan // per-row, per-cell inline runs for BlockTable
 }
 
 type InlineSpan struct {
@@ -48,11 +49,11 @@ var (
 	tableRowRe    = regexp.MustCompile(`^\|(.+)\|$`)
 	tableSepRe    = regexp.MustCompile(`^\|[-:| ]+\|?$`)
 
-	boldRe    = regexp.MustCompile(`\*\*(.+?)\*\*`)
-	italicRe  = regexp.MustCompile(`\*(.+?)\*`)
+	boldRe     = regexp.MustCompile(`\*\*(.+?)\*\*`)
+	italicRe   = regexp.MustCompile(`\*(.+?)\*`)
 	codeSpanRe = regexp.MustCompile("`([^`]+)`")
-	linkRe    = regexp.MustCompile(`\[([^\]]+)\]\(([^)]+)\)`)
-	imageRe   = regexp.MustCompile(`!\[([^\]]*)\]\(([^)]+)\)`)
+	linkRe     = regexp.MustCompile(`\[([^\]]+)\]\(([^)]+)\)`)
+	imageRe    = regexp.MustCompile(`!\[([^\]]*)\]\(([^)]+)\)`)
 )
 
 func Parse(input string) ([]Block, error) {
@@ -129,13 +130,22 @@ func Parse(input string) ([]Block, error) {
 			}
 			if len(rows) >= 2 {
 				var cells [][]string
+				var cellInlines [][][]InlineSpan
 				for _, row := range rows {
 					parts := strings.Split(row, "|")
 					cells = append(cells, parts)
+					spans := make([][]InlineSpan, len(parts))
+					for ci, part := range parts {
+						for _, s := range parseInlines(strings.TrimSpace(part)) {
+							spans[ci] = append(spans[ci], s)
+						}
+					}
+					cellInlines = append(cellInlines, spans)
 				}
 				blocks = append(blocks, Block{
-					Type:  BlockTable,
-					Cells: cells,
+					Type:        BlockTable,
+					Cells:       cells,
+					CellInlines: cellInlines,
 				})
 			}
 			continue

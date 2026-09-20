@@ -152,7 +152,7 @@ func importList(d *Document, block markdown.Block, ordered bool) {
 }
 
 type listNumMap struct {
-	numID        int64
+	numID         int64
 	abstractNumID int64
 }
 
@@ -194,7 +194,65 @@ func importTable(d *Document, block markdown.Block) {
 		d.warn("wordingo: skip table: %v", err)
 		return
 	}
-	_ = tb
+
+	// AddTable fills cells with plain runs; re-render every cell that has
+	// inline formatting (bold/italic/code/links) so table cells match the
+	// formatting rules applied to paragraphs and list items.
+	ct := tb.X()
+	for ri, row := range block.CellInlines {
+		if ri >= len(ct.Tr) {
+			break
+		}
+		for ci, spans := range row {
+			if ci >= len(ct.Tr[ri].Tc) || len(spans) == 0 {
+				continue
+			}
+			tc := ct.Tr[ri].Tc[ci]
+			if len(tc.P) == 0 {
+				tc.P = []*wml.CT_P{{}}
+			}
+			if runs := cellRuns(spans); len(runs) > 0 {
+				tc.P[0].R = runs
+			}
+		}
+	}
+	d.dirty = true
+}
+
+// cellRuns builds formatted runs for one table cell. Hyperlinks fall back
+// to their link text (relationship wiring is paragraph-scoped) and images
+// are skipped.
+func cellRuns(spans []markdown.InlineSpan) []*wml.CT_R {
+	var runs []*wml.CT_R
+	for _, s := range spans {
+		text := s.Text
+		if s.LinkURL != "" {
+			if s.LinkText != "" {
+				text = s.LinkText
+			} else {
+				text = s.LinkURL
+			}
+		}
+		if s.ImageURL != "" || text == "" {
+			continue
+		}
+		r := &wml.CT_R{T: &wml.CT_Text{Value: text}}
+		if s.Bold || s.Italic || s.Code {
+			r.RPr = &wml.CT_RPr{}
+			if s.Bold {
+				r.RPr.B = &wml.CT_OnOff{Val: &yes}
+			}
+			if s.Italic {
+				r.RPr.I = &wml.CT_OnOff{Val: &yes}
+			}
+			if s.Code {
+				font := "Consolas"
+				r.RPr.RFonts = &wml.CT_RFonts{Ascii: &font, HAnsi: &font}
+			}
+		}
+		runs = append(runs, r)
+	}
+	return runs
 }
 
 func applyInlines(p *Paragraph, inlines []markdown.InlineSpan, d *Document) {
